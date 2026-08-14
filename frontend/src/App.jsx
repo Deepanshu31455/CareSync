@@ -1,8 +1,5 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import Login from "./pages/login"
+import FirstPage from "./pages/FirstPage"
 import './App.css'
 
 function App() {
@@ -10,7 +7,7 @@ function App() {
 
   return (
     <div>
-        <Login />
+        <FirstPage />
     </div>
   )
 }

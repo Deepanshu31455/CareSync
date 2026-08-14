@@ -1,113 +1,110 @@
 @import "tailwindcss";
 
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+/* -------------------------------------------------- */
+/* Design tokens — Tailwind v4 reads these directly    */
+/* and generates the matching utilities (bg-ink,       */
+/* text-brand-blue, font-display, max-w-content, etc.) */
+/* -------------------------------------------------- */
+@theme {
+  --color-ink: #0b1f3a;
+  --color-inksoft: #4a5a72;
+  --color-inkfaint: #7c8ba0;
+  --color-bg: #f6faf9;
+  --color-surface: #ffffff;
+  --color-surfacealt: #eef5f3;
+  --color-border: #dbe6e2;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --color-brand-blue: #1657cc;
+  --color-brand-bluedeep: #0b2e6b;
+  --color-brand-teal: #1fb18c;
+  --color-brand-coral: #ff8659;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --font-display: "Fraunces", "Iowan Old Style", serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+  --container-content: 1160px;
+
+  --shadow-card: 0 1px 2px rgba(11, 31, 58, 0.04), 0 12px 28px -16px rgba(11, 31, 58, 0.18);
+
+  --animate-sync-pulse: syncPulse 5s ease-in-out infinite;
+}
+
+@keyframes syncPulse {
+  0% {
+    stroke-dashoffset: 1400;
+    opacity: 0.4;
+  }
+  30% {
+    stroke-dashoffset: 0;
+    opacity: 0.95;
+  }
+  60% {
+    stroke-dashoffset: 0;
+    opacity: 0.5;
+  }
+  80% {
+    stroke-dashoffset: 0;
+    opacity: 0.95;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.5;
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+@layer base {
+  html {
+    scroll-behavior: smooth;
   }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  body {
+    @apply bg-bg text-ink font-body antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display text-ink;
   }
 }
 
-body {
-  margin: 0;
-}
+@layer components {
+  /* Small set of repeated patterns, kept as components so every
+     section doesn't have to restate the same long utility strings. */
+  .eyebrow {
+    @apply font-mono text-[0.78rem] tracking-[0.14em] uppercase text-brand-teal mb-3.5;
+  }
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
+  .section-inner {
+    @apply max-w-content mx-auto px-6 md:px-8 py-16 md:py-24;
+  }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
+  .section-title {
+    @apply text-[clamp(1.75rem,1.2rem+2vw,2.6rem)] font-medium max-w-[34ch] mb-12;
+  }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+  .btn-primary {
+    @apply btn bg-brand-blue text-white shadow-[0_10px_24px_-10px_rgba(22,87,204,0.55)] hover:bg-brand-bluedeep hover:-translate-y-0.5;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-ink border border-border hover:border-brand-blue hover:text-brand-blue;
   }
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+
+/* v4 requires custom classes that will be @applied elsewhere to be
+   registered as real utilities via @utility. This must be top-level,
+   not nested inside @layer. */
+@utility btn {
+  @apply inline-flex items-center justify-center px-6 py-3.5 rounded-full font-semibold text-[0.95rem] transition-all duration-150;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
   }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
