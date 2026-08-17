@@ -28,15 +28,13 @@ const baseUserFields = {
 
 // Hashes `password` before save, only when it's new or has changed —
 // attach this to every role schema with `schema.pre("save", hashPassword)`.
-async function hashPassword(next) {
-  if (!this.isModified("password")) return next();
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err);
+async function hashPassword() {
+  if (!this.isModified("password")) {
+    return;
   }
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 }
 
 module.exports = { baseUserFields, hashPassword };

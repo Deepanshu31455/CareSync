@@ -11,11 +11,15 @@ import DetailsStep from "../features/RegisterPage_DetailsStep";
 import AccountStep from "../features/RegisterPage_AccountStep";
 import PhoneVerifyStep from "../features/RegisterPage_PhoneVerifyStep";
 
+const API_BASE = "http://localhost:4000/api/v1";
+
 export default function RegisterPage() {
   const [stepKey, setStepKey] = useState("email");
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const {
     register,
@@ -41,13 +45,44 @@ export default function RegisterPage() {
   }
 
   function goBack() {
+    setSubmitError("");
     setStepKey(steps[stepIndex - 1]);
   }
 
-  const onSubmit = (data) => {
-    const fullId = `${selectedRole.digit}${data.idSuffix}`;
-    // Hand this off to your registration API.
-    console.log("Register:", { ...data, id: fullId });
+  const onSubmit = async (data) => {
+    setSubmitError("");
+    setSubmitting(true);
+
+    // Drop fields that don't belong in the database: confirmPassword only
+    // ever existed to check against `password` on the client, and idSuffix
+    // gets folded into the single `id` string the backend actually stores.
+    const { confirmPassword, idSuffix, ...rest } = data;
+    const fullId = `${selectedRole.digit}${idSuffix}`;
+
+    try {
+      const res = await fetch(`${API_BASE}/register/${role}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // lets the browser store the httpOnly cookie the server sets
+        body: JSON.stringify({ ...rest, id: fullId }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        setSubmitError(result.message || "Registration failed — please try again");
+        return;
+      }
+
+      // Account created and the server already logged them in via cookie —
+      // go straight to their dashboard instead of back to login.
+      window.location.href = `/dashboard/${result.role}`;
+    } catch (err) {
+      console.error("Registration error:", err);
+      setSubmitError("Cannot connect to server");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -113,6 +148,10 @@ export default function RegisterPage() {
             <PhoneVerifyStep register={register} setValue={setValue} watch={watch} errors={errors} />
           )}
 
+          {submitError && (
+            <p className="mt-5 text-[0.88rem] text-brand-coral font-medium">{submitError}</p>
+          )}
+
           <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
             <button
               type="button"
@@ -128,8 +167,8 @@ export default function RegisterPage() {
                 Continue
               </button>
             ) : (
-              <button type="submit" className="btn-primary">
-                Create account
+              <button type="submit" disabled={submitting} className="btn-primary disabled:opacity-60">
+                {submitting ? "Creating account…" : "Create account"}
               </button>
             )}
           </div>

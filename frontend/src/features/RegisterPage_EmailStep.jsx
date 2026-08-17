@@ -37,7 +37,7 @@ export default function EmailStep({ register, setValue, watch, errors }) {
   register("emailVerified", { validate: (v) => v === true || "Verify your email to continue" });
   register("email", {
     required: "Email is required",
-    pattern: { value: /^[^\s@]+@gmail\.com$/i, message: "Enter a valid Gmail address" },
+    pattern: { value: /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i, message: "Enter a valid Gmail address" },
   });
 
   function continueWithGoogle() {
@@ -58,8 +58,9 @@ export default function EmailStep({ register, setValue, watch, errors }) {
   async function sendOtp() {
     if (cooldown > 0) return; // guard against double-clicks while waiting
 
-    if (!/^[^\s@]+@gmail\.com$/i.test(email || "")) {
-      setOtpError("Enter a valid Gmail address first");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(email || "")) {
+      setOtpError("Enter a valid email address first");
+      console.log("OTP cannot be sent");
       return;
     }
 

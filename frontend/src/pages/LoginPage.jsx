@@ -1,30 +1,11 @@
 import { useState } from "react";
 import logo from "../assets/NewLogo.png";
 
-const roles = [
-  {
-    id: "patient",
-    tag: "Patient",
-    title: "See your history, book a visit",
-    desc: "Access your medical records and switch between in-person and video visits.",
-    accent: "from-brand-blue to-brand-teal",
-  },
-  {
-    id: "doctor",
-    tag: "Doctor",
-    title: "Open a patient's full record",
-    desc: "Review history before the visit and diagnose with complete context.",
-    accent: "from-brand-teal to-brand-blue",
-  },
-  {
-    id: "receptionist",
-    tag: "Receptionist",
-    title: "Manage the front desk",
-    desc: "Register patients, book slots and route them to the right doctor.",
-    accent: "from-brand-coral to-brand-blue",
-  },
+const ROLES = [
+  { id: "patient", label: "Patient", digit: "1" },
+  { id: "receptionist", label: "Receptionist", digit: "2" },
+  { id: "doctor", label: "Doctor", digit: "3" },
 ];
-
 
 function GoogleIcon() {
   return (
@@ -49,26 +30,87 @@ function GoogleIcon() {
   );
 }
 
-
-
-
-function RoleLoginCard({ role }) {
+function LoginCard() {
   const [showForm, setShowForm] = useState(false);
+  const [id, setId] = useState("");
+  const [password, setPassword] = useState("");
+  const [detectedRole, setDetectedRole] = useState(null);
+
+  function handleIdChange(e) {
+    const value = e.target.value;
+
+    setId(value);
+
+    // Only detect role when the first character is 1, 2, or 3
+    const firstDigit = value.charAt(0);
+
+    const role = ROLES.find((r) => r.digit === firstDigit);
+
+    setDetectedRole(role || null);
+  }
+
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  // 1. Check whether a valid role was detected
+  if (!detectedRole) {
+    return;
+  }
+
+  // 2. Send login information to backend
+  try {
+    const res = await fetch("http://localhost:4000/api/v1/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({
+        id,
+        password,
+      }),
+    });
+
+    const result = await res.json();
+
+    // 3. Login failed
+    if (!res.ok) {
+      console.log(result.message);
+      return;
+    }
+
+    // 4. Login successful
+    console.log("Logged in:", result);
+
+    // JWT is already stored in the HttpOnly cookie
+    // Navigate to the dashboard
+    window.location.href = `/dashboard/${result.role}`;
+
+  } catch (error) {
+    console.error("Login error:", error);
+  }
+}
 
   return (
-    <article className="relative overflow-hidden bg-surface border border-border rounded-2xl p-8 flex flex-col shadow-card">
+    <article className="relative max-w-[520px] mx-auto overflow-hidden bg-surface border border-border rounded-2xl p-8 shadow-card">
       <span
-        className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${role.accent}`}
+        className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-blue to-brand-teal"
         aria-hidden="true"
       />
 
       <p className="font-mono text-[0.78rem] tracking-[0.1em] uppercase text-brand-blue mb-2">
-        {role.tag}
+        Account Login
       </p>
-      <h2 className="font-display text-[1.3rem] text-ink mb-2">{role.title}</h2>
-      <p className="text-[0.92rem] text-inksoft mb-7">{role.desc}</p>
 
-      <div className="mt-auto space-y-3">
+      <h2 className="font-display text-[1.4rem] text-ink mb-2">
+        Log in to CareSync
+      </h2>
+
+      <p className="text-[0.92rem] text-inksoft mb-7">
+        Enter your CareSync ID and password to continue.
+      </p>
+
+      <div className="space-y-3">
         <button
           type="button"
           className="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-full border border-border bg-white font-medium text-[0.92rem] text-ink transition-all hover:border-brand-blue hover:-translate-y-0.5"
@@ -87,39 +129,59 @@ function RoleLoginCard({ role }) {
         </button>
 
         {showForm && (
-          <form className="pt-3 space-y-3" onSubmit={(e) => e.preventDefault()}>
+          <form className="pt-3 space-y-3" onSubmit={handleSubmit}>
             <div>
               <label
-                htmlFor={`${role.id}-id`}
+                htmlFor="login-id"
                 className="block text-[0.8rem] font-medium text-inksoft mb-1.5"
               >
-                {role.tag} ID
+                CareSync ID
               </label>
+
               <input
-                id={`${role.id}-id`}
+                id="login-id"
                 type="text"
+                value={id}
+                onChange={handleIdChange}
                 autoComplete="username"
-                placeholder={`Enter your ${role.tag.toLowerCase()} ID`}
+                placeholder="Enter your CareSync ID"
                 className="w-full px-4 py-2.5 rounded-lg border border-border bg-surfacealt text-[0.92rem] text-ink placeholder:text-inkfaint focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
               />
+
+              {detectedRole && (
+                <p className="mt-2 text-[0.82rem] text-brand-teal">
+                  Detected account: {detectedRole.label}
+                </p>
+              )}
             </div>
+
             <div>
               <label
-                htmlFor={`${role.id}-password`}
+                htmlFor="login-password"
                 className="block text-[0.8rem] font-medium text-inksoft mb-1.5"
               >
                 Password
               </label>
+
               <input
-                id={`${role.id}-password`}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                id="login-password"
                 type="password"
                 autoComplete="current-password"
                 placeholder="••••••••"
                 className="w-full px-4 py-2.5 rounded-lg border border-border bg-surfacealt text-[0.92rem] text-ink placeholder:text-inkfaint focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
               />
             </div>
-            <button type="submit" className="btn-primary w-full">
-              Log in as {role.tag}
+
+            <button
+              type="submit"
+              disabled={!detectedRole}
+              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {detectedRole
+                ? `Log in as ${detectedRole.label}`
+                : "Enter a valid ID"}
             </button>
           </form>
         )}
@@ -128,16 +190,19 @@ function RoleLoginCard({ role }) {
   );
 }
 
-
-
 export default function LoginPage() {
   return (
     <div className="min-h-screen bg-bg">
       <header className="border-b border-border">
         <div className="max-w-content mx-auto px-6 md:px-8 py-5 flex items-center justify-between">
           <a href="/" aria-label="CareSync home">
-            <img src={logo} alt="CareSync logo" className="h-9 w-auto" />
+            <img
+              src={logo}
+              alt="CareSync logo"
+              className="h-9 w-auto"
+            />
           </a>
+
           <a
             href="/"
             className="text-sm font-medium text-inksoft hover:text-brand-blue transition-colors"
@@ -149,34 +214,33 @@ export default function LoginPage() {
 
       <main className="max-w-content mx-auto px-6 md:px-8 py-13 md:pt-15 pb-30">
         <div className="text-center max-w-[52ch] mx-auto mb-14">
-          <p className="eyebrow justify-center flex">Log in</p>
+          <p className="eyebrow justify-center flex">
+            Log in
+          </p>
+
           <h1 className="text-[clamp(1.9rem,1.4rem+2vw,2.75rem)] font-display font-medium text-ink mb-3">
-            Pick how you use CareSync
+            Welcome back to CareSync
           </h1>
+
           <p className="text-inksoft">
-            Each login opens a different view — choose the one that's yours.
+            Enter your ID and we'll automatically identify your account type.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {roles.map((role) => (
-            <RoleLoginCard key={role.id} role={role} />
-          ))}
-        </div>
+        <LoginCard />
+
         <div className="text-center mt-10">
           <p className="text-[0.92rem] text-inksoft">
-          Not registered yet?{" "}
-    
-          <a href="/register"
-            className="font-semibold text-brand-blue hover:text-brand-bluedeep underline underline-offset-4">
-            Sign up
-          </a>
+            Not registered yet?{" "}
+            <a
+              href="/register"
+              className="font-semibold text-brand-blue hover:text-brand-bluedeep underline underline-offset-4"
+            >
+              Sign up
+            </a>
           </p>
         </div>
       </main>
     </div>
   );
 }
-
-
-

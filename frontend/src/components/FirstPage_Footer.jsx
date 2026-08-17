@@ -33,13 +33,13 @@ export default function FirstPage_Footer() {
           </h4>
           <ul className="space-y-2.5">
             <li>
-              <a href="mailto:hello@caresync.app" className="text-[0.92rem] hover:text-white">
-                hello@caresync.app
+              <a href="mailto:deep3.36ojha@gmail.com" className="text-[0.92rem] hover:text-white">
+                deep3.36ojha@gmail.com
               </a>
             </li>
             <li>
-              <a href="tel:+911140001234" className="text-[0.92rem] hover:text-white">
-                +91 11 4000 1234
+              <a href="tel:+917983187046" className="text-[0.92rem] hover:text-white">
+                +91 7983187046
               </a>
             </li>
           </ul>
