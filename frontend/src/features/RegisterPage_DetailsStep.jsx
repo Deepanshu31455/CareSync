@@ -1,4 +1,4 @@
-import Field from "../components/RegisterPage_Field";
+import Field from "../components/FirstPage/RegisterPage_Field";
 import { inputClass, fieldBorder, phoneValidate } from "../utils/utils";
 
 export default function DetailsStep({ role, register, errors }) {

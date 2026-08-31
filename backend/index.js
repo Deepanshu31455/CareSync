@@ -5,6 +5,13 @@ const mongoose=require('mongoose');
 
 
 const app=express();
+const fileUpload=require("express-fileupload")
+app.use(fileUpload({
+    useTempFiles: true,
+    tempFileDir: "/tmp/"
+}));
+
+
 
 require("dotenv").config();
 const PORT=process.env.PORT ||3000;
@@ -28,8 +35,8 @@ app.use(cookieParser());
 const connectwithdb=require("./config/database");
 connectwithdb();
 
-// const cloud=require("./config/cloudinary");
-// cloud.cloudinaryConnect();
+const cloud=require("./config/cloudinary");
+cloud.cloudinaryConnect();
 
 
 const Route=require("./routes/route")

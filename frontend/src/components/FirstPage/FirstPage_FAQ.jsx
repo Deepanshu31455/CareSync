@@ -24,7 +24,7 @@ const faqs = [
 ];
 
 export default function FirstPage_FAQ() {
-  const [openIndex, setOpenIndex] = useState(0);
+  const [openIndex, setOpenIndex] = useState(-1);
 
   return (
     <section id="faq" className="section-inner">
@@ -56,3 +56,5 @@ export default function FirstPage_FAQ() {
     </section>
   );
 }
+
+//code of component reruns when values of usestate hook changes

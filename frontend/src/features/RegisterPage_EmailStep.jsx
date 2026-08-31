@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import Field from "../components/RegisterPage_Field";
+import Field from "../components/FirstPage/RegisterPage_Field";
 import { GoogleIcon } from "../components/icons";
 import { inputClass, fieldBorder } from "../utils/utils";
+import { GoogleLogin } from "@react-oauth/google";
 
 const RESEND_COOLDOWN_SECONDS = 30;
 
@@ -40,11 +41,65 @@ export default function EmailStep({ register, setValue, watch, errors }) {
     pattern: { value: /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i, message: "Enter a valid Gmail address" },
   });
 
-  function continueWithGoogle() {
+
+
+
+async function continueWithGoogle(credentialResponse) {
+  try {
+    const credential = credentialResponse?.credential;
+
+    if (!credential) {
+      setOtpError("Google authentication failed");
+      return;
+    }
+
+    const res = await fetch(
+      "http://localhost:4000/api/v1/googleregister",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          credential,
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      setOtpError(data.message || "Google verification failed");
+      return;
+    }
+
+    const googleUser = data.googleUser;
+
     setValue("authMethod", "google");
-    setValue("email", "your-account@gmail.com", { shouldValidate: true }); // replace with the address Google OAuth returns
-    setValue("emailVerified", true, { shouldValidate: true });
+
+    setValue("email", googleUser.email, {
+      shouldValidate: true,
+    });
+
+    setValue("emailVerified", true, {
+      shouldValidate: true,
+    });
+
+    // If you want to keep these for later registration:
+
+    setOtpError("");
+
+    console.log("Google verified:", googleUser);
+
+  } catch (error) {
+    console.error("Google authentication error:", error);
+
+    setOtpError("Cannot connect to server");
   }
+}
+
+
+
 
   function useGmailInstead() {
     setValue("authMethod", "manual");
@@ -58,7 +113,7 @@ export default function EmailStep({ register, setValue, watch, errors }) {
   async function sendOtp() {
     if (cooldown > 0) return; // guard against double-clicks while waiting
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(email || "")) {
+      if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/i.test(email || "")) {
       setOtpError("Enter a valid email address first");
       console.log("OTP cannot be sent");
       return;
@@ -126,14 +181,12 @@ export default function EmailStep({ register, setValue, watch, errors }) {
 
   return (
     <div className="space-y-5">
-      <button
-        type="button"
-        onClick={continueWithGoogle}
-        className="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-full border border-border bg-white font-medium text-[0.92rem] text-ink transition-all hover:border-brand-blue hover:-translate-y-0.5"
-      >
-        <GoogleIcon />
-        Continue with Google
-      </button>
+    <GoogleLogin
+      onSuccess={continueWithGoogle}
+      onError={() => {
+        setOtpError("Google authentication failed");
+      }}
+    />
 
       <div className="flex items-center gap-3">
         <span className="h-px flex-1 bg-border" />

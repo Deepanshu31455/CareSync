@@ -24,6 +24,7 @@ const baseUserFields = {
   authMethod: { type: String, enum: ["google", "manual"], default: "manual" },
   emailVerified: { type: Boolean, default: false },
   phoneVerified: { type: Boolean, default: false },
+  profilePhoto: { type: String, default: ""},
 };
 
 // Hashes `password` before save, only when it's new or has changed —

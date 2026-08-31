@@ -50,6 +50,10 @@ export default function FirstPage_Features() {
               <span className="font-mono text-[0.8rem] text-inkfaint">
                 {String(i + 1).padStart(2, "0")}
               </span>
+              {/* "1".padStart(2, "0")   // "01"
+              "2".padStart(2, "0")   // "02"
+              "9".padStart(2, "0")   // "09"
+              "10".padStart(2, "0")  // "10" */}
               <p className="font-mono text-[0.78rem] tracking-[0.1em] uppercase text-brand-blue mt-2.5 mb-2">
                 {role.tag}
               </p>

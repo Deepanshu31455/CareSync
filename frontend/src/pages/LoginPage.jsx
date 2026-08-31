@@ -1,5 +1,10 @@
 import { useState } from "react";
 import logo from "../assets/NewLogo.png";
+import { useDispatch,useSelector } from "react-redux";
+import { useNavigate,Link } from "react-router-dom";
+import { setUser } from "../redux/authSlice";
+import { GoogleLogin } from "@react-oauth/google";
+
 
 const ROLES = [
   { id: "patient", label: "Patient", digit: "1" },
@@ -31,6 +36,9 @@ function GoogleIcon() {
 }
 
 function LoginCard() {
+    const user = useSelector((state) => state.authStore.user);//only check error
+  const navigate=useNavigate();
+  const dispatch=useDispatch();
   const [showForm, setShowForm] = useState(false);
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
@@ -59,6 +67,8 @@ async function handleSubmit(e) {
 
   // 2. Send login information to backend
   try {
+
+    //basic syntax to interact with backend
     const res = await fetch("http://localhost:4000/api/v1/login", {
       method: "POST",
       headers: {
@@ -80,14 +90,72 @@ async function handleSubmit(e) {
     }
 
     // 4. Login successful
-    console.log("Logged in:", result);
-
+//    console.log("Logged in:", result);
+    const dataforslice = {
+      id: result.id,
+      name: result.name,
+      email: result.email,
+      role: result.role,
+    };
+      dispatch(setUser(dataforslice));
+      console.log("Redux user dispatched:", dataforslice);
+      
     // JWT is already stored in the HttpOnly cookie
     // Navigate to the dashboard
-    window.location.href = `/dashboard/${result.role}`;
-
+    navigate(`/dashboard/${result.role}`, { replace: true });
   } catch (error) {
     console.error("Login error:", error);
+  }
+}
+async function handleGoogleLogin(credentialResponse) {
+  try {
+    const credential = credentialResponse?.credential;
+
+    if (!credential) {
+      console.error("No Google credential received");
+      return;
+    }
+
+    const res = await fetch(
+      "http://localhost:4000/api/v1/googlelogin",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          credential,
+        }),
+      }
+    );
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      console.error("Google login failed:", result.message);
+      return;
+    }
+
+    // Backend has verified Google and created your JWT cookie
+    const dataforslice = {
+      id: result.user.id,
+      name: result.user.name,
+      email: result.user.email,
+      role: result.user.role,
+      profilePhoto:result.user.profilePhoto,
+    };
+
+    dispatch(setUser(dataforslice));
+
+    console.log("Google login successful:", dataforslice);
+
+    navigate(`/dashboard/${result.user.role}`, {
+      replace: true,
+    });
+
+  } catch (error) {
+    console.error("Google login error:", error);
   }
 }
 
@@ -111,13 +179,12 @@ async function handleSubmit(e) {
       </p>
 
       <div className="space-y-3">
-        <button
-          type="button"
-          className="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-full border border-border bg-white font-medium text-[0.92rem] text-ink transition-all hover:border-brand-blue hover:-translate-y-0.5"
-        >
-          <GoogleIcon />
-          Continue with Google
-        </button>
+      <GoogleLogin
+        onSuccess={handleGoogleLogin}
+        onError={() => {
+          console.log("Google Login Failed");
+        }}
+      />
 
         <button
           type="button"
@@ -140,7 +207,7 @@ async function handleSubmit(e) {
 
               <input
                 id="login-id"
-                type="text"
+                type="number"
                 value={id}
                 onChange={handleIdChange}
                 autoComplete="username"
@@ -203,12 +270,12 @@ export default function LoginPage() {
             />
           </a>
 
-          <a
-            href="/"
+          <Link
+            to="/"
             className="text-sm font-medium text-inksoft hover:text-brand-blue transition-colors"
           >
             ← Back to home
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -232,12 +299,13 @@ export default function LoginPage() {
         <div className="text-center mt-10">
           <p className="text-[0.92rem] text-inksoft">
             Not registered yet?{" "}
-            <a
-              href="/register"
+            <Link
+              to="/register"
+              replace
               className="font-semibold text-brand-blue hover:text-brand-bluedeep underline underline-offset-4"
             >
               Sign up
-            </a>
+            </Link>
           </p>
         </div>
       </main>

@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import logo from "../assets/NewLogo.png";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { setUser } from "../redux/authSlice";
+import { useNavigate,Link } from "react-router-dom";
+
+
 
 import { ROLES, STEP_FIELDS } from "../features/RegisterPage_constants";
 import Stepper from "../features/RegisterPage_Stepper";
@@ -14,6 +20,9 @@ import PhoneVerifyStep from "../features/RegisterPage_PhoneVerifyStep";
 const API_BASE = "http://localhost:4000/api/v1";
 
 export default function RegisterPage() {
+  const user = useSelector((state) => state.authStore.user);//remove after checking error
+  const dispatch=useDispatch();
+  const navigate=useNavigate();
   const [stepKey, setStepKey] = useState("email");
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -52,7 +61,6 @@ export default function RegisterPage() {
   const onSubmit = async (data) => {
     setSubmitError("");
     setSubmitting(true);
-
     // Drop fields that don't belong in the database: confirmPassword only
     // ever existed to check against `password` on the client, and idSuffix
     // gets folded into the single `id` string the backend actually stores.
@@ -67,16 +75,25 @@ export default function RegisterPage() {
         body: JSON.stringify({ ...rest, id: fullId }),
       });
 
+      const dataforslice={
+          id: fullId,
+          name: data.fullName,
+          email: data.email,
+          role: data.role 
+      }
+
       const result = await res.json();
 
       if (!res.ok) {
         setSubmitError(result.message || "Registration failed — please try again");
         return;
       }
+      dispatch(setUser(dataforslice));
+      console.log("after dispatch from register page",dataforslice)
+      navigate(`/dashboard/${role}`, { replace: true }); // <-- replace, not push
 
       // Account created and the server already logged them in via cookie —
       // go straight to their dashboard instead of back to login.
-      window.location.href = `/dashboard/${result.role}`;
     } catch (err) {
       console.error("Registration error:", err);
       setSubmitError("Cannot connect to server");
@@ -89,12 +106,12 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-bg">
       <header className="border-b border-border">
         <div className="max-w-content mx-auto px-6 md:px-8 py-5 flex items-center justify-between">
-          <a href="/" aria-label="CareSync home">
+          <Link to="/" aria-label="CareSync home">
             <img src={logo} alt="CareSync logo" className="h-9 w-auto" />
-          </a>
-          <a href="/login" className="text-sm font-medium text-inksoft hover:text-brand-blue transition-colors">
+          </Link>
+          <Link to="/login" className="text-sm font-medium text-inksoft hover:text-brand-blue transition-colors">
             Already have an account? Log in
-          </a>
+          </Link>
         </div>
       </header>
 

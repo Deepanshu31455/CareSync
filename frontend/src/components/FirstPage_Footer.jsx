@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import logo from "../assets/NewLogo.png";
 
 const services = [
@@ -78,9 +79,9 @@ export default function FirstPage_Footer() {
           <ul className="space-y-2.5">
             {legal.map((l) => (
               <li key={l}>
-                <a href="#top" className="text-[0.92rem] hover:text-white">
+                <Link to="/TrustAndLegal" className="text-[0.92rem] hover:text-white">
                   {l}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

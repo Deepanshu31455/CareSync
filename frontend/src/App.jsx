@@ -1,13 +1,18 @@
-import { useState } from 'react'
-import FirstPage from "./pages/FirstPage"
-import { createBrowserRouter, RouterProvider, Link, Outlet, Navigate } from "react-router-dom";
-// import Useparams from "./components/Useparams"; 
-import { useNavigate } from "react-router-dom";
-import LoginPage from './pages/LoginPage';
-import './App.css'
-import RegisterPage from './pages/RegisterPage';
+import FirstPage from "./pages/FirstPage";
+import {
+  createBrowserRouter,
+  RouterProvider,
+} from "react-router-dom";
 
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import TrustAndLegal from "./pages/TrustAndLegalPage";
 
+import ProtectedRoute from "./components/ProtectedRoutes";
+import PublicOnly from "./components/PublicRoutes";
+import DoctorDashboard from "./pages/DoctorDashboard";
+
+import "./App.css";
 
 
 const router = createBrowserRouter([
@@ -16,22 +21,53 @@ const router = createBrowserRouter([
     element: <FirstPage />,
   },
   {
-    path: "/register",
-    element: <RegisterPage />,
+    path:"/TrustAndLegal",
+    element:<TrustAndLegal/>
   },
+
+  // Only logged-out users can access these
+  {
+    path: "/register",
+    element: (
+      <PublicOnly>
+        <RegisterPage />
+      </PublicOnly>
+    ),
+  },
+  
   {
     path: "/login",
-    element: <LoginPage />,
+    element: (
+      <PublicOnly>
+        <LoginPage />
+      </PublicOnly>
+    ),
+  },
+
+  // Example protected route
+  {
+    path: "/dashboard/:role",
+    element: (
+      <ProtectedRoute>
+        <DoctorDashboard />
+      </ProtectedRoute>
+    ),
+  },
+
+  // Example protected route
+  {
+    path: "/profile",
+    element: (
+      <ProtectedRoute>
+        <div>Profile</div>
+      </ProtectedRoute>
+    ),
   },
 ]);
-function App() {
-  const [count, setCount] = useState(0)
 
-  return (
-    <div>
-        <RouterProvider router={router} />
-    </div>
-  )
+
+function App() {
+  return <RouterProvider router={router} />;
 }
 
-export default App
+export default App;

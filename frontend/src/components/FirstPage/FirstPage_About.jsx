@@ -28,7 +28,7 @@ export default function FirstPage_About() {
             key={p.title}
             className="bg-surface border border-border rounded-2xl p-7 shadow-card"
           >
-            <h3 className="text-[1.15rem] mb-2.5">{p.title}</h3>
+            <b><h3 className="text-[1.15rem] mb-2.5">{p.title}</h3></b>
             <p className="text-[0.96rem] text-inksoft m-0">{p.body}</p>
           </article>
         ))}

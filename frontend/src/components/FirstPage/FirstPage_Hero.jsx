@@ -1,6 +1,13 @@
+import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
+
 export default function FirstPage_Hero() {
+  const user = useSelector((state) => state.authStore.user);
   return (
-    <section id="top" className="max-w-content mx-auto px-6 md:px-8 pt-16 md:pt-24 pb-16 grid md:grid-cols-[1.05fr_0.95fr] gap-12 items-center">
+    <section
+      id="top"
+      className="max-w-content mx-auto px-6 md:px-8 pt-16 md:pt-24 pb-16 grid md:grid-cols-[1.05fr_0.95fr] gap-12 items-center"
+    >
       <div>
         <p className="eyebrow">What we are</p>
         <h1 className="text-[clamp(2.4rem,1.7rem+3vw,3.6rem)] font-semibold leading-[1.08] mb-6">
@@ -9,22 +16,32 @@ export default function FirstPage_Hero() {
           Three people in sync.
         </h1>
         <p className="text-[1.08rem] text-inksoft max-w-[46ch] mb-9">
-          CareSync is a clinic management platform that keeps patients,
-          doctors and receptionists reading from the same page — a shared
-          medical history that follows the patient from the front desk,
-          into the exam room, and onto their next video visit.
+          CareSync connects patients, doctors, and receptionists in one
+          healthcare platform. Patients can book appointments, make payments,
+          join queues, and receive prescriptions, while doctors manage
+          consultations and patients, and receptionists handle bookings and
+          administrative tasks.
         </p>
         <div className="flex flex-wrap gap-4">
-          <a href="#contact" className="btn-primary">
-            Get started
-          </a>
+          {user ? (
+            <Link to={`/dashboard/${user.role}`} className="btn-primary">
+              Go to work
+            </Link>
+          ) : (
+            <Link to="/login" className="btn-primary">
+              Get started
+            </Link>
+          )}
           <a href="#how-it-works" className="btn-ghost">
             See how it works
           </a>
         </div>
       </div>
 
-      <div className="flex justify-center order-first md:order-last" aria-hidden="true">
+      <div
+        className="flex justify-center order-first md:order-last"
+        aria-hidden="true"
+      >
         <SyncPulse />
       </div>
     </section>

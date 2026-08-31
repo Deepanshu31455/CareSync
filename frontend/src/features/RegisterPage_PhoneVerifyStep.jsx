@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Field from "../components/RegisterPage_Field";
+import Field from "../components/FirstPage/RegisterPage_Field";
 import { inputClass } from "../utils/utils";
 
 export default function PhoneVerifyStep({ register, setValue, watch, errors }) {

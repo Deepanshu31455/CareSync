@@ -1,16 +1,25 @@
-import Field from "../components/RegisterPage_Field";
+import Field from "../components/FirstPage/RegisterPage_Field";
 import { inputClass, fieldBorder, phoneValidate } from "..//utils/utils";
 
 export default function PersonalStep({ register, errors }) {
   return (
     <div className="grid sm:grid-cols-2 gap-5">
-      <Field label="Full name" error={errors.fullName}>
-        <input
-          {...register("fullName", { required: "Full name is required" })}
-          className={`${inputClass} ${fieldBorder(errors.fullName)}`}
-          placeholder="Jane Doe"
-        />
-      </Field>
+    <Field label="Full name" error={errors.fullName}>
+      <input
+        {...register("fullName", {
+          required: "Full name is required",
+          pattern: {
+            value: /^[A-Za-z ]+$/,
+            message: "Full name can contain only alphabets",
+          },
+        })}
+        onInput={(e) => {
+          e.target.value = e.target.value.replace(/[^A-Za-z ]/g, "");
+        }}
+        className={`${inputClass} ${fieldBorder(errors.fullName)}`}
+        placeholder="Jane Doe"
+      />
+    </Field>
 
       <Field label="Phone number" error={errors.phone}>
         <input
