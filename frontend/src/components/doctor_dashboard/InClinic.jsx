@@ -58,24 +58,13 @@ const InClinic = ({setView,view}) => {
           Physical Consultations
         </h2>
       </div>
+      
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center mb-5"
-          style={{ backgroundColor: COLORS.tealSoft }}
-        >
-          <Stethoscope size={26} style={{ color: COLORS.teal }} />
-        </div>
-        <h3
-          className="text-xl font-semibold mb-2"
-          style={{ fontFamily: "'Space Grotesk', sans-serif", color: COLORS.navy }}
-        >
-          Nothing here yet
-        </h3>
-        <p className="text-sm text-center max-w-sm" style={{ color: COLORS.textMuted }}>
-          Tell me what should go in the physical consultations view and I'll build it in.
-        </p>
-      </div>
+
+
+
+
+
     </div>
   )
 }
