@@ -43,6 +43,7 @@ function LoginCard() {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [detectedRole, setDetectedRole] = useState(null);
+  const [googleError, setGoogleError] = useState("");
 
   function handleIdChange(e) {
     const value = e.target.value;
@@ -113,6 +114,7 @@ async function handleGoogleLogin(credentialResponse) {
 
     if (!credential) {
       console.error("No Google credential received");
+      setGoogleError("Email is not registered.");
       return;
     }
 
@@ -133,9 +135,19 @@ async function handleGoogleLogin(credentialResponse) {
     const result = await res.json();
 
     if (!res.ok) {
-      console.error("Google login failed:", result.message);
+      const message = result?.message || "Email is not registered.";
+      const normalizedMessage = message.toLowerCase();
+
+      if (normalizedMessage.includes("not registered") || normalizedMessage.includes("does not exist") || normalizedMessage.includes("register first")) {
+        setGoogleError("Email is not registered.");
+      } else {
+        setGoogleError(message);
+      }
+      console.error("Google login failed:", message);
       return;
     }
+
+    setGoogleError("");
 
     // Backend has verified Google and created your JWT cookie
     const dataforslice = {
@@ -156,6 +168,7 @@ async function handleGoogleLogin(credentialResponse) {
 
   } catch (error) {
     console.error("Google login error:", error);
+    setGoogleError("Email is not registered.");
   }
 }
 
@@ -183,8 +196,13 @@ async function handleGoogleLogin(credentialResponse) {
         onSuccess={handleGoogleLogin}
         onError={() => {
           console.log("Google Login Failed");
+          setGoogleError("Email is not registered.");
         }}
       />
+
+      {googleError && (
+        <p className="text-[0.82rem] font-medium text-red-600 mt-1">{googleError}</p>
+      )}
 
         <button
           type="button"

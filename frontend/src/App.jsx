@@ -13,6 +13,7 @@ import PublicOnly from "./components/PublicRoutes";
 import DoctorDashboard from "./pages/DoctorDashboard";
 
 import "./App.css";
+import DoctorProfile from "./pages/DoctorProfile";
 
 
 const router = createBrowserRouter([
@@ -54,12 +55,12 @@ const router = createBrowserRouter([
     ),
   },
 
-  // Example protected route
+  // Doctor profile — protected, doctor only
   {
     path: "/profile",
     element: (
       <ProtectedRoute>
-        <div>Profile</div>
+        <DoctorProfile />
       </ProtectedRoute>
     ),
   },
