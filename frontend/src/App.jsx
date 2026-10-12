@@ -13,6 +13,8 @@ import TrustAndLegal from "./pages/TrustAndLegalPage";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorProfile from "./pages/DoctorProfile";
 import PatientProfile from "./pages/PatientProfile";
+import ReceptionistProfile from "./pages/ReceptionistProfile";
+import AssignmentResponse from "./pages/AssignmentResponse";
 
 // Route guards
 import ProtectedRoute from "./components/ProtectedRoutes";
@@ -27,6 +29,7 @@ const DASHBOARDS = {
 const PROFILES = {
   doctor: DoctorProfile,
   patient: PatientProfile,
+  receptionist: ReceptionistProfile,
 };
 
 // Shows the page that belongs to the logged-in user's role.
@@ -43,6 +46,9 @@ const router = createBrowserRouter([
   // ─── Public ────────────────────────────────────────────────────────────────
   { path: "/", element: <FirstPage /> },
   { path: "/TrustAndLegal", element: <TrustAndLegal /> },
+
+  // Opened from the email a doctor gets. No login needed: the token in the link is the proof.
+  { path: "/assignment/respond", element: <AssignmentResponse /> },
 
   // ─── Logged-out users only ─────────────────────────────────────────────────
   {

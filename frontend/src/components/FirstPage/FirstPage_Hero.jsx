@@ -1,8 +1,21 @@
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 
+// The main button for each logged-in role: its text and where it goes.
+// Doctor and receptionist go to their dashboard; a patient goes to doctor search.
+// Change SEARCH_ROUTE to the path of your search page.
+const SEARCH_ROUTE = "/search";
+
+const ROLE_BUTTON = {
+  doctor: { label: "Go to work", to: "/dashboard/doctor" },
+  receptionist: { label: "Go to work", to: "/dashboard/receptionist" },
+  patient: { label: "Search for doctor", to: SEARCH_ROUTE },
+};
+
 export default function FirstPage_Hero() {
   const user = useSelector((state) => state.authStore.user);
+  const button = user ? ROLE_BUTTON[user.role] : null;
+
   return (
     <section
       id="top"
@@ -24,9 +37,12 @@ export default function FirstPage_Hero() {
         </p>
         <div className="flex flex-wrap gap-4">
           {user ? (
-            <Link to={`/dashboard/${user.role}`} className="btn-primary">
-              Go to work
-            </Link>
+            // A logged-in user with an unknown role gets no button instead of a broken link
+            button && (
+              <Link to={button.to} className="btn-primary">
+                {button.label}
+              </Link>
+            )
           ) : (
             <Link to="/login" className="btn-primary">
               Get started

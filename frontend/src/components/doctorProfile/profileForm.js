@@ -8,6 +8,7 @@ export function buildForm(doc) {
     qualifications: doc.qualifications || "",
     affiliation: doc.affiliation || "",
     experience: doc.experience ?? 0,
+    consultationFee: doc.consultationFee ?? "",
     phone: doc.phone || "",
     phone1: doc.phone1 || doc.phone || "",
     phone2: doc.phone2 || "",

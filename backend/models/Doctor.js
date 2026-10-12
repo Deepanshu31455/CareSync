@@ -13,6 +13,9 @@ const doctorSchema = new mongoose.Schema(
     affiliation:    { type: String, default: "" },            // clinic / hospital name
     qualifications: { type: String, default: "" },            // e.g. "MBBS, MD, FACC"
 
+    // Fee for one consultation, in rupees (shown on the profile and to receptionists)
+    consultationFee: { type: Number, default: 0, min: 0 },
+
     // Extended contact
     phone1: { type: String, default: "" }, // primary contact number
     phone2: { type: String, default: "" }, // secondary / emergency number

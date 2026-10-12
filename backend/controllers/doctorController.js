@@ -1,5 +1,28 @@
 const Doctor = require("../models/Doctor");
 
+// Every field a doctor may change from the profile page.
+// rating, totalRatings and reviews are deliberately NOT here: a doctor must not be
+// able to write their own ratings. (The page shows sample ratings for now.)
+const UPDATABLE_FIELDS = [
+  "fullName",
+  "specialization",
+  "qualifications",
+  "affiliation",
+  "experience",
+  "consultationFee",
+  "phone",
+  "phone1",
+  "phone2",
+  "address",
+  "clinicAddress",
+  "workingHours",
+  "googleExperience",
+  "facilities",
+  "otherDescription",
+  "directions",
+  "profilePhoto",
+];
+
 // ─── GET /api/v1/doctor/profile ──────────────────────────────────────────────
 // Returns the full profile of the currently-logged-in doctor (from JWT cookie).
 exports.getDoctorProfile = async (req, res) => {
@@ -28,36 +51,13 @@ exports.updateDoctorProfile = async (req, res) => {
       return res.status(404).json({ success: false, message: "Doctor not found." });
     }
 
-    // List of every field a doctor is allowed to update from the profile page.
-    const updatable = [
-      "fullName",
-      "specialization",
-      "qualifications",
-      "affiliation",
-      "experience",
-      "phone",
-      "phone1",
-      "phone2",
-      "address",
-      "clinicAddress",
-      "workingHours",
-      "rating",
-      "totalRatings",
-      "reviews",
-      "googleExperience",
-      "facilities",
-      "otherDescription",
-      "directions",
-      "profilePhoto",
-    ];
-
-    updatable.forEach((key) => {
+    UPDATABLE_FIELDS.forEach((key) => {
       if (req.body[key] !== undefined) {
         doctor[key] = req.body[key];
       }
     });
 
-    await doctor.save();
+    await doctor.save(); // runs the schema validators (for example consultationFee >= 0)
 
     const updated = await Doctor.findById(doctor._id).select("-password");
 
@@ -75,4 +75,3 @@ exports.updateDoctorProfile = async (req, res) => {
     return res.status(500).json({ success: false, message: "Could not update doctor profile." });
   }
 };
-

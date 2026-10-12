@@ -23,10 +23,28 @@ const {
   addBill,
   deleteBill,
 } = require("../controllers/patientController");
+const {
+  getProfile: getReceptionistProfile,
+  updateProfile: updateReceptionistProfile,
+  updatePhoto: updateReceptionistPhoto,
+} = require("../controllers/receptionistController");
+const {
+  listForReceptionist,
+  searchDoctors,
+  sendRequest,
+  cancelRequest,
+  removeDoctor,
+  listForDoctor,
+  respondInApp,
+  removeReceptionist,
+  previewByToken,
+  respondByToken,
+} = require("../controllers/assignmentController");
 
 // middleware
 const { authMiddleware } = require("../middlewares/authMiddleware");
 const { loadPatient }    = require("../middlewares/loadPatient");
+const { loadReceptionist, loadDoctor } = require("../middlewares/loadAccount");
 
 // ─── Auth / general ──────────────────────────────────────────────────────────
 router.get( "/me",              (req, res, next) => { console.log("HIT /me"); next(); }, getMe);
@@ -61,4 +79,29 @@ router.delete("/patient/test-reports/:id",   patientOnly, deleteReport);
 router.post(  "/patient/bills",              patientOnly, addBill);
 router.delete("/patient/bills/:id",          patientOnly, deleteBill);
 
-module.exports = router
+// ─── Receptionist profile ────────────────────────────────────────────────────
+const receptionistOnly = [authMiddleware, loadReceptionist];
+
+router.get("/receptionist/profile",          receptionistOnly, getReceptionistProfile);
+router.put("/receptionist/profile",          receptionistOnly, updateReceptionistProfile);
+router.put("/receptionist/photo",            receptionistOnly, updateReceptionistPhoto);
+
+// Serving doctors: connected ones, search, and email-confirmed requests
+router.get(   "/receptionist/doctors",         receptionistOnly, listForReceptionist);
+router.get(   "/receptionist/doctors/search",  receptionistOnly, searchDoctors); // before /:id
+router.delete("/receptionist/doctors/:id",     receptionistOnly, removeDoctor);
+router.post(  "/receptionist/requests",        receptionistOnly, sendRequest);
+router.delete("/receptionist/requests/:id",    receptionistOnly, cancelRequest);
+
+// ─── Doctor side of the assignment ───────────────────────────────────────────
+const doctorOnly = [authMiddleware, loadDoctor];
+
+router.get(   "/doctor/staff",         doctorOnly, listForDoctor);
+router.put(   "/doctor/requests/:id",  doctorOnly, respondInApp);
+router.delete("/doctor/staff/:id",     doctorOnly, removeReceptionist);
+
+// ─── Emailed link (public: the secret token is the credential) ───────────────
+router.get( "/assignments/preview", previewByToken);
+router.post("/assignments/respond", respondByToken);
+
+module.exports = router;

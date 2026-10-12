@@ -9,9 +9,11 @@ import ProfileNavbar from "../components/doctorProfile/ProfileNavbar";
 import ProfileHeader from "../components/doctorProfile/ProfileHeader";
 import ContactSection from "../components/doctorProfile/ContactSection";
 import WorkingHoursSection from "../components/doctorProfile/WorkingHoursSection";
+import FeesSection from "../components/doctorProfile/FeesSection";
 import FacilitiesSection from "../components/doctorProfile/FacilitiesSection";
 import AboutSection from "../components/doctorProfile/AboutSection";
 import DirectionsSection from "../components/doctorProfile/DirectionsSection";
+import StaffSection from "../components/doctorProfile/StaffSection";
 
 
 export default function DoctorProfile() {
@@ -101,6 +103,8 @@ export default function DoctorProfile() {
 
         <WorkingHoursSection d={d} editing={editing} onChangeDay={changeDay} />
 
+        <FeesSection d={d} editing={editing} onChange={changeField} />
+
         <RatingsSection rating={DUMMY_RATING} reviews={DUMMY_REVIEWS} />
 
         <FacilitiesSection d={d} editing={editing} onChange={changeField} />
@@ -108,6 +112,8 @@ export default function DoctorProfile() {
         <AboutSection d={d} editing={editing} onChange={changeField} />
 
         <DirectionsSection d={d} editing={editing} onChange={changeField} />
+
+        <StaffSection />
       </main>
     </div>
   );
