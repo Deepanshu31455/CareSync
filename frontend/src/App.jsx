@@ -8,24 +8,23 @@ import FirstPage from "./pages/FirstPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import TrustAndLegal from "./pages/TrustAndLegalPage";
+import AssignmentResponse from "./pages/AssignmentResponse";
 
 // Logged-in pages
-import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorProfile from "./pages/DoctorProfile";
+import DoctorPhysical from "./pages/DoctorPhysical";
+import DoctorVideo from "./pages/DoctorVideo";
 import PatientProfile from "./pages/PatientProfile";
+import SearchDoctors from "./pages/SearchDoctors";
 import ReceptionistProfile from "./pages/ReceptionistProfile";
-import AssignmentResponse from "./pages/AssignmentResponse";
+import ReceptionistDashboard from "./pages/ReceptionistDashboard";
+import SocketTest from "./pages/SocketTest";
 
 // Route guards
 import ProtectedRoute from "./components/ProtectedRoutes";
 import PublicOnly from "./components/PublicRoutes";
 
-// Which page each role sees. To add a page later (for example a patient
-// dashboard), add one line here.
-const DASHBOARDS = {
-  doctor: DoctorDashboard,
-};
-
+// The profile page of each role.
 const PROFILES = {
   doctor: DoctorProfile,
   patient: PatientProfile,
@@ -40,6 +39,21 @@ function ByRole({ pages }) {
   const Page = pages[role];
 
   return Page ? <Page /> : <Navigate to="/" replace />; // no page for this role yet
+}
+
+// Lets only the given role see a page; everyone else goes to the first page.
+function OnlyRole({ role, children }) {
+  const current = useSelector((state) => state.authStore.user?.role);
+  return current === role ? children : <Navigate to="/" replace />;
+}
+
+// Logged in AND the right role, in one wrapper
+function Page({ role, children }) {
+  return (
+    <ProtectedRoute>
+      <OnlyRole role={role}>{children}</OnlyRole>
+    </ProtectedRoute>
+  );
 }
 
 const router = createBrowserRouter([
@@ -68,20 +82,62 @@ const router = createBrowserRouter([
     ),
   },
 
-  // ─── Logged-in users only ──────────────────────────────────────────────────
+  // ─── Doctor: two workspaces ────────────────────────────────────────────────
+  // "Go to work" opens /dashboard/doctor, which leads to the physical visits.
+  { path: "/dashboard/doctor", element: <Navigate to="/dashboard/doctor/physical" replace /> },
   {
-    path: "/dashboard/:role",
+    path: "/dashboard/doctor/physical",
     element: (
-      <ProtectedRoute>
-        <ByRole pages={DASHBOARDS} />
-      </ProtectedRoute>
+      <Page role="doctor">
+        <DoctorPhysical />
+      </Page>
     ),
   },
+  {
+    path: "/dashboard/doctor/video",
+    element: (
+      <Page role="doctor">
+        <DoctorVideo />
+      </Page>
+    ),
+  },
+
+  // ─── Receptionist ──────────────────────────────────────────────────────────
+  {
+    path: "/dashboard/receptionist",
+    element: (
+      <Page role="receptionist">
+        <ReceptionistDashboard />
+      </Page>
+    ),
+  },
+
+  // ─── Patient ───────────────────────────────────────────────────────────────
+  {
+    path: "/search",
+    element: (
+      <Page role="patient">
+        <SearchDoctors />
+      </Page>
+    ),
+  },
+
+  // ─── Any logged-in user ────────────────────────────────────────────────────
   {
     path: "/profile",
     element: (
       <ProtectedRoute>
         <ByRole pages={PROFILES} />
+      </ProtectedRoute>
+    ),
+  },
+
+  // Temporary: remove when you have finished testing the live connection
+  {
+    path: "/socket-test",
+    element: (
+      <ProtectedRoute>
+        <SocketTest />
       </ProtectedRoute>
     ),
   },

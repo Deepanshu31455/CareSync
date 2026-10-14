@@ -45,6 +45,20 @@ const {
 const { authMiddleware } = require("../middlewares/authMiddleware");
 const { loadPatient }    = require("../middlewares/loadPatient");
 const { loadReceptionist, loadDoctor } = require("../middlewares/loadAccount");
+const { queueAccess } = require("../middlewares/queueAccess");
+const { resolveDoctor } = require("../middlewares/resolveDoctor");
+const { searchDoctors: searchDoctorsForPatients, getDoctor: getDoctorForPatients } = require("../controllers/doctorSearchController");
+const { checkout, confirm: confirmBooking, myBookings, cancelBooking } = require("../controllers/bookingController");
+const { getPatientInfo } = require("../controllers/doctorPatientController");
+const { listRecords, addRecord, deleteRecord } = require("../controllers/recordsController");
+const {
+  getQueue,
+  getNowServing,
+  addWalkIn,
+  callNext,
+  changeStatus,
+  reschedule,
+} = require("../controllers/queueController");
 
 // ─── Auth / general ──────────────────────────────────────────────────────────
 router.get( "/me",              (req, res, next) => { console.log("HIT /me"); next(); }, getMe);
@@ -103,5 +117,49 @@ router.delete("/doctor/staff/:id",     doctorOnly, removeReceptionist);
 // ─── Emailed link (public: the secret token is the credential) ───────────────
 router.get( "/assignments/preview", previewByToken);
 router.post("/assignments/respond", respondByToken);
+
+// ─── Patients: find a doctor and book (physical consultations) ───────────────
+// :doctorId is the doctor's 6-digit ID
+router.get("/doctors/search",                         patientOnly, searchDoctorsForPatients); // before /:doctorId
+router.get("/doctors/:doctorId",                      [...patientOnly, resolveDoctor], getDoctorForPatients);
+router.post("/patient/bookings/checkout",             patientOnly, checkout);
+router.post("/patient/bookings/:paymentId/confirm",   patientOnly, confirmBooking);
+router.get("/patient/bookings",                       patientOnly, myBookings);
+router.post("/patient/bookings/:appointmentId/cancel", patientOnly, cancelBooking);
+
+// ─── Queue (physical consultations) ──────────────────────────────────────────
+// look: the doctor, or a receptionist assigned to that doctor     desk: assigned receptionist only
+// :doctorId in the address is the doctor's 6-digit ID; resolveDoctor turns it into the database _id
+const queueLook = [authMiddleware, resolveDoctor, queueAccess()];
+const queueDesk = [authMiddleware, resolveDoctor, queueAccess({ write: true })];
+
+router.get("/queue/:doctorId",                                queueLook, getQueue);
+router.get("/queue/:doctorId/now",                            authMiddleware, resolveDoctor, getNowServing); // any logged-in user
+router.get("/queue/:doctorId/appointments/:id/patient",       queueLook, getPatientInfo); // the doctor opens a patient
+router.post("/queue/:doctorId/walk-in",                       queueDesk, addWalkIn);
+router.post("/queue/:doctorId/next",                          queueDesk, callNext);
+router.put("/queue/:doctorId/appointments/:id/status",        queueDesk, changeStatus);
+router.put("/queue/:doctorId/appointments/:id/reschedule",    queueDesk, reschedule);
+
+// Records of a visit: the receptionist uploads prescriptions, test reports and bills (kind = prescriptions | reports | bills)
+router.get(   "/queue/:doctorId/appointments/:id/records",               queueDesk, listRecords);
+router.post(  "/queue/:doctorId/appointments/:id/records/:kind",         queueDesk, addRecord);
+router.delete("/queue/:doctorId/appointments/:id/records/:kind/:itemId", queueDesk, deleteRecord);
+
+// ─── Live connection test (development only; remove when the queue is built) ──
+// Sends a test message to every open browser tab of the logged-in user.
+router.post("/socket/test", authMiddleware, (req, res) => {
+  if (process.env.NODE_ENV === "production") return res.status(404).json({ success: false });
+
+  const io = req.app.get("io");
+  let sent = 0;
+  for (const socket of io.sockets.sockets.values()) {
+    if (socket.data.user?.accountId === req.user.accountId) {
+      socket.emit("socket:test", { message: "Hello from the server", at: new Date().toISOString() });
+      sent++;
+    }
+  }
+  return res.status(200).json({ success: true, sent });
+});
 
 module.exports = router;

@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const Assignment = require("../models/Assignment");
 const Doctor = require("../models/Doctor");
 const { sendMail } = require("../utils/sendMail");
+const { revokeQueueAccess } = require("../socket/emitter");
 
 /* ------------------------------------------------------------------ */
 /* Settings and small helpers                                          */
@@ -13,7 +14,7 @@ const REQUEST_VALID_DAYS = 7; // the emailed link stops working after this
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 // What the other side is allowed to see about a person
-const DOCTOR_CARD = "fullName specialization profilePhoto clinicAddress consultationFee";
+const DOCTOR_CARD = "id fullName specialization profilePhoto clinicAddress consultationFee";
 const STAFF_CARD = "fullName profilePhoto email"; // pending: enough to recognise them
 const STAFF_CARD_ACTIVE = "fullName profilePhoto email phone"; // active: contact details too
 
@@ -233,6 +234,9 @@ exports.removeDoctor = async (req, res) => {
     const done = await end({ _id: req.params.id, receptionist: req.account._id }, "receptionist");
     if (!done) return fail(res, 404, "Assignment not found.");
 
+    // take the receptionist out of that doctor's live queue right away
+    revokeQueueAccess(req.app.get("io"), done.receptionist, done.doctor).catch(() => {});
+
     return res.status(200).json({ success: true, message: "Doctor removed from your list" });
   } catch (err) {
     return serverError(res, err, "Could not remove the doctor");
@@ -305,6 +309,8 @@ exports.removeReceptionist = async (req, res) => {
 
     const done = await end({ _id: req.params.id, doctor: req.account._id }, "doctor");
     if (!done) return fail(res, 404, "Assignment not found.");
+
+    revokeQueueAccess(req.app.get("io"), done.receptionist, done.doctor).catch(() => {});
 
     return res.status(200).json({ success: true, message: "Receptionist removed" });
   } catch (err) {
