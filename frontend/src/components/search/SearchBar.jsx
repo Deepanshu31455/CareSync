@@ -2,7 +2,7 @@ import { CalendarDays, Search } from "lucide-react";
 import { inputClass } from "../shared/constants";
 
 // The search box, the day and the "only doctors consulting that day" switch.
-//   date must be between `min` (today) and `max` (two weeks ahead)
+//   date must be between `min` (today) and `max` (7 days ahead)
 export default function SearchBar({ text, onText, date, onDate, min, max, consultingOnly, onConsultingOnly }) {
   return (
     <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">

@@ -1,4 +1,4 @@
-import { CalendarClock, Check, FileText, Phone, PhoneCall, UserX, X } from "lucide-react";
+import { BadgeCheck, CalendarClock, Check, FileText, Phone, UserX, X } from "lucide-react";
 import { STATUS } from "./constants";
 import { RECORD_STATUSES } from "../records/constants";
 
@@ -6,16 +6,19 @@ const GENDER_LABEL = { male: "Male", female: "Female", other: "Other", "prefer-n
 
 // One person in the queue: token, details and the buttons that make sense for their status.
 //   item   { appointmentId, tokenNumber, status, source, paymentStatus, name, age, gender, phone? }
-//   isToday        calling and no-show are for today's patients only
-//   someoneInside  true while another patient is with the doctor ("Call in" waits for them)
+//   isToday        no-show is for today's patients only
+//   (calling a patient is done only with "Call next patient" in the side panel, not from the row)
 //   working        which action is running (disables the buttons)
-//   onStart / onComplete / onCancel / onNoShow / onReschedule  (item) => ...
+//   onComplete / onCancel / onNoShow / onReschedule  (item) => ...
+//   onFee          (item) => ...  a walk-in's fee: marks it paid (or asks before undoing)
 //   onRecords      (item) => ...  opens the tests, reports and bills of an app patient (also after the visit)
-export default function QueueRow({ item, isToday, someoneInside, working, onStart, onComplete, onCancel, onNoShow, onReschedule, onRecords }) {
+export default function QueueRow({ item, isToday, working, onComplete, onCancel, onNoShow, onReschedule, onRecords, onFee }) {
   const status = STATUS[item.status] || STATUS.waiting;
   const inside = item.status === "in_consultation";
   const waiting = item.status === "waiting";
   const busy = working !== null;
+  const canFee = Boolean(onFee) && item.source === "walk_in" && RECORD_STATUSES.includes(item.status);
+  const feePaid = item.paymentStatus === "paid";
   const canRecords = Boolean(onRecords) && item.source === "online" && RECORD_STATUSES.includes(item.status);
 
   const details = [
@@ -44,11 +47,6 @@ export default function QueueRow({ item, isToday, someoneInside, working, onStar
                 Refund due
               </span>
             )}
-            {item.paymentStatus === "pending" && !inside && item.status !== "cancelled" && (
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
-                Fee pending
-              </span>
-            )}
           </div>
           <p className="mt-0.5 text-sm text-slate-600">{details.join(" · ")}</p>
           {item.phone && (
@@ -59,24 +57,28 @@ export default function QueueRow({ item, isToday, someoneInside, working, onStar
         </div>
       </div>
 
-      {(waiting || inside || canRecords) && (
+      {(waiting || inside || canRecords || canFee) && (
         <div className="flex flex-wrap gap-2">
+          {canFee && (
+            <button
+              onClick={() => onFee(item)}
+              disabled={busy}
+              title={feePaid ? "Fee received. Click to undo." : "Click when the patient has paid the fee"}
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold disabled:opacity-50 ${
+                feePaid
+                  ? "border-green-600 bg-green-600 text-white hover:bg-green-700"
+                  : "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100"
+              }`}
+            >
+              <BadgeCheck size={14} /> {feePaid ? "Fee paid" : "Mark fee paid"}
+            </button>
+          )}
           {canRecords && (
             <button
               onClick={() => onRecords(item)}
               className="flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50"
             >
               <FileText size={14} /> Records
-            </button>
-          )}
-          {waiting && isToday && (
-            <button
-              onClick={() => onStart(item)}
-              disabled={busy || someoneInside}
-              title={someoneInside ? "Complete the current patient first" : undefined}
-              className="flex items-center gap-1.5 rounded-full bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <PhoneCall size={14} /> Call in
             </button>
           )}
           {inside && (

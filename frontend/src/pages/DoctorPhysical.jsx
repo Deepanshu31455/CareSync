@@ -3,9 +3,12 @@ import { useEffect, useState } from "react";
 import useDoctorSelf from "../hooks/useDoctorSelf";
 import useQueue from "../hooks/useQueue";
 import usePatientInfo from "../hooks/usePatientInfo";
+import useUpcoming from "../hooks/useUpcoming";
 import { todayIST, formatDay } from "../utils/dates";
 
 import { ErrorState } from "../components/shared/ui";
+import DoctorNavbar from "../components/doctorWorkspace/DoctorNavbar";
+import UpcomingDays from "../components/queueDesk/UpcomingDays";
 import WorkspaceTabs from "../components/doctorWorkspace/WorkspaceTabs";
 import DoctorQueue from "../components/doctorWorkspace/DoctorQueue";
 import PatientPanel from "../components/doctorWorkspace/PatientPanel";
@@ -26,6 +29,7 @@ export default function DoctorPhysical() {
   }, []);
 
   const queue = useQueue({ doctorId, date: today, mode: "queue" });
+  const upcoming = useUpcoming(doctorId);
 
   // Which person is open: the one the doctor chose, otherwise whoever is with the doctor now
   const [chosenId, setChosenId] = useState(null);
@@ -42,9 +46,18 @@ export default function DoctorPhysical() {
       </div>
     );
   }
-  if (doctorError || !doctor) return <ErrorState text={doctorError || "Could not load your profile."} onRetry={reload} />;
+  if (doctorError || !doctor) {
+    return (
+      <>
+        <DoctorNavbar />
+        <ErrorState text={doctorError || "Could not load your profile."} onRetry={reload} />
+      </>
+    );
+  }
 
   return (
+    <>
+    <DoctorNavbar />
     <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -53,6 +66,8 @@ export default function DoctorPhysical() {
         </div>
         <WorkspaceTabs />
       </div>
+
+      <UpcomingDays days={upcoming.days} />
 
       {queue.error ? (
         <ErrorState text={queue.error} onRetry={queue.refresh} />
@@ -74,5 +89,6 @@ export default function DoctorPhysical() {
         </div>
       )}
     </div>
+    </>
   );
 }

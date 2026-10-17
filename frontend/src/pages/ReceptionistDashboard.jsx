@@ -5,6 +5,7 @@ import { CalendarDays } from "lucide-react";
 import useDeskDoctors from "../hooks/useDeskDoctors";
 import useQueue from "../hooks/useQueue";
 import useQueueDesk from "../hooks/useQueueDesk";
+import useUpcoming from "../hooks/useUpcoming";
 import { todayIST, formatDay } from "../utils/dates";
 
 import { EmptyState, ErrorState, Messages } from "../components/shared/ui";
@@ -15,6 +16,7 @@ import NowServingCard from "../components/queueDesk/NowServingCard";
 import WalkInForm from "../components/queueDesk/WalkInForm";
 import QueueRow from "../components/queueDesk/QueueRow";
 import RescheduleDialog from "../components/queueDesk/RescheduleDialog";
+import UpcomingDays from "../components/queueDesk/UpcomingDays";
 import RecordsDialog from "../components/records/RecordsDialog";
 import { FINISHED } from "../components/queueDesk/constants";
 
@@ -46,6 +48,8 @@ export default function ReceptionistDashboard() {
   const queue = useQueue({ doctorId, date, mode: "queue" });
   const desk = useQueueDesk({ doctorId, refresh: queue.refresh, connection: queue.connection });
 
+  const upcoming = useUpcoming(doctorId);
+
   const [confirm, setConfirm] = useState(null); // { item, action }
   const [rescheduling, setRescheduling] = useState(null); // item
   const [recordsFor, setRecordsFor] = useState(null); // item whose records are open
@@ -54,8 +58,17 @@ export default function ReceptionistDashboard() {
   const finished = queue.items.filter((item) => FINISHED.includes(item.status));
 
   async function runConfirmed() {
-    const done = await desk.changeStatus(confirm.item.appointmentId, confirm.action);
+    const done =
+      confirm.action === "fee_undo"
+        ? await desk.setFee(confirm.item.appointmentId, false)
+        : await desk.changeStatus(confirm.item.appointmentId, confirm.action);
     if (done) setConfirm(null);
+  }
+
+  // Marking a fee paid needs one click. Undoing it asks first, so a wrong click cannot unmark it silently.
+  function askFee(item) {
+    if (item.paymentStatus === "paid") setConfirm({ item, action: "fee_undo" });
+    else desk.setFee(item.appointmentId, true);
   }
 
   async function runReschedule(newDate) {
@@ -92,6 +105,7 @@ export default function ReceptionistDashboard() {
     complete: { title: "Complete this visit?", button: "Complete", danger: false },
     cancel: { title: "Cancel this token?", button: "Cancel token", danger: true },
     no_show: { title: "Mark as no-show?", button: "Mark no-show", danger: true },
+    fee_undo: { title: "Mark the fee as not paid?", button: "Mark not paid", danger: true },
   };
 
   /* ---------- 4. The screen ---------- */
@@ -130,6 +144,12 @@ export default function ReceptionistDashboard() {
 
       <DoctorPicker doctors={doctors} selectedId={doctorId} onSelect={(id) => setParams({ doctor: id }, { replace: true })} />
 
+      <UpcomingDays
+        days={upcoming.days}
+        selected={date}
+        onPick={(picked) => setPickedDate(picked)}
+      />
+
       <Messages success={desk.message} error={desk.error} />
 
       <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
@@ -158,14 +178,13 @@ export default function ReceptionistDashboard() {
                       key={item.appointmentId}
                       item={item}
                       isToday={isToday}
-                      someoneInside={queue.nowServing !== null}
                       working={desk.working}
-                      onStart={(row) => desk.changeStatus(row.appointmentId, "start")}
                       onComplete={(row) => setConfirm({ item: row, action: "complete" })}
                       onCancel={(row) => setConfirm({ item: row, action: "cancel" })}
                       onNoShow={(row) => setConfirm({ item: row, action: "no_show" })}
                       onReschedule={setRescheduling}
                       onRecords={setRecordsFor}
+                      onFee={askFee}
                     />
                   ))}
                 </ul>
@@ -178,7 +197,7 @@ export default function ReceptionistDashboard() {
                   </summary>
                   <ul className="mt-3 space-y-3">
                     {finished.map((item) => (
-                      <QueueRow key={item.appointmentId} item={item} isToday={isToday} working={null} onRecords={setRecordsFor} />
+                      <QueueRow key={item.appointmentId} item={item} isToday={isToday} working={null} onRecords={setRecordsFor} onFee={askFee} />
                     ))}
                   </ul>
                 </details>

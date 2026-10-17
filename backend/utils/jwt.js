@@ -16,5 +16,13 @@ function setAuthCookie(res, token) {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days, matches TOKEN_TTL
   });
 }
- 
-module.exports = { signToken, setAuthCookie, COOKIE_NAME };
+function clearAuthCookie(res) {
+  res.clearCookie(COOKIE_NAME, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
+}
+
+module.exports = { signToken, setAuthCookie, clearAuthCookie, COOKIE_NAME };

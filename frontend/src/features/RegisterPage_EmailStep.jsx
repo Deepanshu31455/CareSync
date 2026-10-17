@@ -3,6 +3,7 @@ import Field from "../components/FirstPage/RegisterPage_Field";
 import { GoogleIcon } from "../components/icons";
 import { inputClass, fieldBorder } from "../utils/utils";
 import { GoogleLogin } from "@react-oauth/google";
+import { API_BASE } from "../config";
 
 const RESEND_COOLDOWN_SECONDS = 30;
 
@@ -54,7 +55,7 @@ async function continueWithGoogle(credentialResponse) {
     }
 
     const res = await fetch(
-      "http://localhost:4000/api/v1/googleregister",
+      `${API_BASE}/googleregister`,
       {
         method: "POST",
         headers: {
@@ -120,7 +121,7 @@ async function continueWithGoogle(credentialResponse) {
     }
 
     try {
-      const res = await fetch("http://localhost:4000/api/v1/send-otp", {
+      const res = await fetch(`${API_BASE}/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -144,7 +145,7 @@ async function continueWithGoogle(credentialResponse) {
 
   async function verifyOtp() {
     try {
-      const res = await fetch("http://localhost:4000/api/v1/verify-otp", {
+      const res = await fetch(`${API_BASE}/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp: otpInput }),
@@ -255,4 +256,3 @@ async function continueWithGoogle(credentialResponse) {
     </div>
   );
 }
-

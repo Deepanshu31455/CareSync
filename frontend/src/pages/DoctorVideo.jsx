@@ -1,11 +1,14 @@
 import { Video } from "lucide-react";
 
+import DoctorNavbar from "../components/doctorWorkspace/DoctorNavbar";
 import WorkspaceTabs from "../components/doctorWorkspace/WorkspaceTabs";
 import { Card } from "../components/shared/ui";
 
 // The doctor's workspace for video consultations: its own address, built later.
 export default function DoctorVideo() {
   return (
+    <>
+    <DoctorNavbar />
     <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-serif text-2xl font-semibold text-slate-900">Video visits</h1>
@@ -23,5 +26,6 @@ export default function DoctorVideo() {
         </div>
       </Card>
     </div>
+    </>
   );
 }

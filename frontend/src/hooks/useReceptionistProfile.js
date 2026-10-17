@@ -14,7 +14,7 @@ import {
   setSuccessMessage,
   clearMessages,
 } from "../redux/receptionistSlice";
-import { setUser } from "../redux/authslice";
+import { setUser } from "../redux/authSlice";
 
 import { BASE, ENDPOINTS } from "../components/receptionistProfile/constants";
 

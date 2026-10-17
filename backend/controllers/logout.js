@@ -1,12 +1,9 @@
-const logout = (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: false, // true in production with HTTPS
-    sameSite: "lax",
-    path: "/",
-  });
+const { clearAuthCookie } = require("../utils/jwt");
 
-  res.status(200).json({
+const logout = (req, res) => {
+  clearAuthCookie(res);
+
+  return res.status(200).json({
     message: "Logged out successfully",
   });
 };

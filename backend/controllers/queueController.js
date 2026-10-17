@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
-const { todayIST, isValidDate, isDoctorOpenOn } = require("../utils/dates");
+const { todayIST, isValidDate, isDoctorOpenOn, addDays } = require("../utils/dates");
 const { roomName } = require("../socket/access");
 const { currentSeq } = require("../socket/emitter");
 const { ensureConsultation } = require("../services/recordsService");
@@ -75,6 +75,35 @@ exports.getNowServing = async (req, res) => {
     return res.status(200).json({ success: true, date, nowServing, waiting, waitingTokens, seq });
   } catch (err) {
     return serverError(res, err, "Could not load the queue");
+  }
+};
+
+// GET /queue/:doctorId/upcoming        (doctor or assigned receptionist)
+// Only counts: how many people are still waiting on each coming day (no names, nothing private).
+// The days that have no one are left out.
+const UPCOMING_DAYS = 30; // rescheduling can go further than the 7-day booking window
+exports.getUpcoming = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const today = todayIST();
+
+    const rows = await Appointment.find({
+      doctor: doctorId,
+      status: "waiting",
+      date: { $gt: today, $lte: addDays(today, UPCOMING_DAYS) },
+    })
+      .select("date")
+      .lean();
+
+    const counts = {};
+    for (const row of rows) counts[row.date] = (counts[row.date] || 0) + 1;
+
+    const days = Object.keys(counts)
+      .sort()
+      .map((date) => ({ date, count: counts[date] }));
+    return res.status(200).json({ success: true, days });
+  } catch (err) {
+    return serverError(res, err, "Could not load the coming days");
   }
 };
 
@@ -207,6 +236,43 @@ exports.changeStatus = async (req, res) => {
   } catch (err) {
     if (isDuplicate(err)) return fail(res, 409, BUSY);
     return serverError(res, err, "Could not change the status");
+  }
+};
+
+// PUT /queue/:doctorId/appointments/:id/fee   { paid: true | false }
+// For a walk-in: the patient hands over the fee and the receptionist marks it paid (or undoes a wrong click).
+// Online bookings are paid through the app, so they are not touched here.
+exports.setFee = async (req, res) => {
+  try {
+    const { doctorId, id } = req.params;
+    if (!mongoose.isValidObjectId(id)) return fail(res, 404, "Appointment not found.");
+    if (typeof req.body.paid !== "boolean") return fail(res, 400, "Say whether the fee is paid.");
+
+    const paid = req.body.paid;
+    const updated = await Appointment.findOneAndUpdate(
+      {
+        _id: id,
+        doctor: doctorId,
+        source: "walk_in",
+        status: { $in: ["waiting", "in_consultation", "completed"] },
+        paymentStatus: paid ? "pending" : "paid",
+      },
+      { paymentStatus: paid ? "paid" : "pending" },
+      { new: true }
+    );
+
+    if (!updated) {
+      const row = await Appointment.findOne({ _id: id, doctor: doctorId }).select("source paymentStatus status").lean();
+      if (!row) return fail(res, 404, "Appointment not found.");
+      if (row.source !== "walk_in") return fail(res, 409, "This patient paid through the app.");
+      if (!["waiting", "in_consultation", "completed"].includes(row.status)) return fail(res, 409, "This token is closed.");
+      return res.status(200).json({ success: true, unchanged: true }); // already in that state (a repeated click)
+    }
+
+    await publishChange(req.app.get("io"), updated._id);
+    return res.status(200).json({ success: true, item: formatItem(updated.toObject(), { withPhone: true }) });
+  } catch (err) {
+    return serverError(res, err, "Could not update the fee");
   }
 };
 

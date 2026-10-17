@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setLoading,setUser } from "../redux/authSlice";
+import { API_BASE } from "../config";
 export default function AuthInitialize({ children }) {
   const dispatch = useDispatch();
 
@@ -8,7 +9,7 @@ export default function AuthInitialize({ children }) {
     const initializeAuth = async () => {
       try {
         const response = await fetch(
-          "http://localhost:4000/api/v1/me",
+          `${API_BASE}/me`,
           {
             method: "GET",
             credentials: "include",

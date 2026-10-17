@@ -1,10 +1,11 @@
 import { FlaskConical, Pill, Receipt, Stethoscope, User } from "lucide-react";
+import { API_BASE } from "../../config";
 
 /* ------------------------------------------------------------------ */
 /* BACKEND: change these addresses to match your routes                */
 /* ------------------------------------------------------------------ */
 
-export const BASE = "http://localhost:4000/api/v1";
+export const BASE = API_BASE;
 
 // What the page sends and expects back (all calls use the login cookie):
 //

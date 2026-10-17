@@ -110,6 +110,33 @@ export default function useQueueDesk({ doctorId, refresh, connection }) {
     }
   }
 
+  // A walk-in's fee: paid = true when the patient has handed over the money, false to undo a wrong click
+  async function setFee(appointmentId, paid) {
+    try {
+      setWorking(appointmentId);
+      setError(null);
+      setMessage(null);
+
+      const res = await fetch(`${API_BASE}/queue/${doctorId}/appointments/${appointmentId}/fee`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paid }),
+      });
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.message || "Could not update the fee.");
+
+      afterChange();
+      return true;
+    } catch (err) {
+      setError(err.message || "Could not connect to the server.");
+      return false;
+    } finally {
+      setWorking(null);
+    }
+  }
+
   // Move a person to another day (or the end of today's queue). They get a new token.
   async function reschedule(appointmentId, newDate) {
     try {
@@ -138,5 +165,5 @@ export default function useQueueDesk({ doctorId, refresh, connection }) {
     }
   }
 
-  return { working, message, error, addWalkIn, callNext, changeStatus, reschedule };
+  return { working, message, error, addWalkIn, callNext, changeStatus, reschedule, setFee };
 }

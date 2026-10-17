@@ -1,4 +1,6 @@
-export const BASE = "http://localhost:4000/api/v1";
+import { API_BASE } from "../../config";
+
+export const BASE = API_BASE;
 
 export const DAYS = [
   "Monday",

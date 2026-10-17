@@ -10,7 +10,7 @@ import {
   clearMessages,
   patchDoctorData,
 } from "../redux/doctorSlice";
-import { setUser } from "../redux/authslice";
+import { setUser } from "../redux/authSlice";
 
 import { BASE } from "../components/doctorProfile/constants";
 import { buildForm } from "../components/doctorProfile/profileForm";

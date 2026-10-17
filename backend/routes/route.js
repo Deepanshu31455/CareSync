@@ -58,6 +58,8 @@ const {
   callNext,
   changeStatus,
   reschedule,
+  getUpcoming,
+  setFee,
 } = require("../controllers/queueController");
 
 // ─── Auth / general ──────────────────────────────────────────────────────────
@@ -69,7 +71,7 @@ router.post("/login",           login);
 router.post("/logout",          logout);
 router.post("/googleregister",  verifyGoogleForRegistration);
 router.post("/googlelogin",     loginWithGoogle);
-router.put( "/imageUpload",     imageUpload);
+router.put( "/imageUpload",     authMiddleware, imageUpload);
 
 // ─── Doctor profile ──────────────────────────────────────────────────────────
 router.get("/doctor/profile",  authMiddleware, getDoctorProfile);
@@ -134,12 +136,14 @@ const queueLook = [authMiddleware, resolveDoctor, queueAccess()];
 const queueDesk = [authMiddleware, resolveDoctor, queueAccess({ write: true })];
 
 router.get("/queue/:doctorId",                                queueLook, getQueue);
+router.get("/queue/:doctorId/upcoming",                       queueLook, getUpcoming);
 router.get("/queue/:doctorId/now",                            authMiddleware, resolveDoctor, getNowServing); // any logged-in user
 router.get("/queue/:doctorId/appointments/:id/patient",       queueLook, getPatientInfo); // the doctor opens a patient
 router.post("/queue/:doctorId/walk-in",                       queueDesk, addWalkIn);
 router.post("/queue/:doctorId/next",                          queueDesk, callNext);
 router.put("/queue/:doctorId/appointments/:id/status",        queueDesk, changeStatus);
 router.put("/queue/:doctorId/appointments/:id/reschedule",    queueDesk, reschedule);
+router.put("/queue/:doctorId/appointments/:id/fee",           queueDesk, setFee);
 
 // Records of a visit: the receptionist uploads prescriptions, test reports and bills (kind = prescriptions | reports | bills)
 router.get(   "/queue/:doctorId/appointments/:id/records",               queueDesk, listRecords);

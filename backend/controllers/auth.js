@@ -18,6 +18,21 @@ const auth = async (req, res) => {
       return res.status(400).json({ message: "Unknown role" });
     }
 
+    const ROLE_PREFIX = {
+      patient: "1",
+      receptionist: "2",
+      doctor: "3",
+    };
+
+    const expectedDigit = ROLE_PREFIX[role];
+    const id = String(req.body.id || "").trim();
+
+    if (!id || !/^\d{6}$/.test(id) || !id.startsWith(expectedDigit)) {
+      return res.status(400).json({
+        message: `A ${role} ID must be exactly 6 digits starting with '${expectedDigit}'.`,
+      });
+    }
+
     const { emailVerified, phoneVerified } = req.body;
     if (!emailVerified || !phoneVerified) {
       // Belt-and-suspenders — the frontend already blocks this, but the
@@ -25,9 +40,15 @@ const auth = async (req, res) => {
       return res.status(400).json({ message: "Email and phone must be verified first" });
     }
 
+    // Sanitize payload to prevent overwriting internal/protected fields
+    const payload = { ...req.body, id, role };
+    delete payload.rating;
+    delete payload.totalRatings;
+    delete payload.reviews;
+
     // new Model(...).save() runs the pre-save hook from
     // shared/baseUserFields.js, which hashes `password` before it's stored.
-    const account = await Model.create(req.body);
+    const account = await Model.create(payload);
 
     // Never echo the password hash back, even though `select: false`
     // already keeps it out of normal queries.

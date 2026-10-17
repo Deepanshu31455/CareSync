@@ -16,8 +16,7 @@ import RoleStep from "../features/RegisterPage_RoleStep";
 import DetailsStep from "../features/RegisterPage_DetailsStep";
 import AccountStep from "../features/RegisterPage_AccountStep";
 import PhoneVerifyStep from "../features/RegisterPage_PhoneVerifyStep";
-
-const API_BASE = "http://localhost:4000/api/v1";
+import { API_BASE } from "../config";
 
 export default function RegisterPage() {
   const user = useSelector((state) => state.authStore.user);//remove after checking error
@@ -90,7 +89,7 @@ export default function RegisterPage() {
       }
       dispatch(setUser(dataforslice));
       console.log("after dispatch from register page",dataforslice)
-      navigate(`/dashboard/${role}`, { replace: true }); // <-- replace, not push
+      navigate(role === "patient" ? "/" : `/dashboard/${role}`, { replace: true });
 
       // Account created and the server already logged them in via cookie —
       // go straight to their dashboard instead of back to login.

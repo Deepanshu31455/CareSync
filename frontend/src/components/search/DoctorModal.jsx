@@ -158,7 +158,7 @@ export default function DoctorModal({ doctorId, firstDate, onClose, onBooked }) 
                   ))}
                 </div>
                 {!days.some((d) => d.open) && (
-                  <p className="mt-2 text-sm text-slate-500">This doctor has no consulting days in the next two weeks.</p>
+                  <p className="mt-2 text-sm text-slate-500">This doctor has no consulting days in the next 7 days.</p>
                 )}
 
                 {/* The kind of consultation */}

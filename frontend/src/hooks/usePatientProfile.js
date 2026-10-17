@@ -13,7 +13,7 @@ import {
   setSuccessMessage,
   clearMessages,
 } from "../redux/patientSlice";
-import { setUser } from "../redux/authslice";
+import { setUser } from "../redux/authSlice";
 
 import { BASE, ENDPOINTS, KINDS } from "../components/patientProfile/constants";
 

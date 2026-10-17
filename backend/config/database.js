@@ -2,8 +2,6 @@ const mongoose = require("mongoose");
 
 require("dotenv").config();
 
-console.log("DATABASE.JS LOADED");
-console.log("MONGODB_URL =", process.env.MONGODB_URL);
 
 const connectwithdb = () => {
     mongoose.connect(process.env.MONGODB_URL)

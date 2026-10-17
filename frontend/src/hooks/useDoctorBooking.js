@@ -8,7 +8,7 @@ import { API_BASE } from "../config";
 //   pay(paymentId)      -> the booking with its token number (or null on failure)
 export default function useDoctorBooking(doctorId) {
   const [doctor, setDoctor] = useState(null);
-  const [days, setDays] = useState([]); // [{ date, weekday, open }] for the next two weeks
+  const [days, setDays] = useState([]); // [{ date, weekday, open }] for today and the next 7 days
   const [today, setToday] = useState(null); // { date, nowServing, waiting }
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);

@@ -4,6 +4,7 @@ import { useDispatch,useSelector } from "react-redux";
 import { useNavigate,Link } from "react-router-dom";
 import { setUser } from "../redux/authSlice";
 import { GoogleLogin } from "@react-oauth/google";
+import { API_BASE } from "../config";
 
 
 const ROLES = [
@@ -70,7 +71,7 @@ async function handleSubmit(e) {
   try {
 
     //basic syntax to interact with backend
-    const res = await fetch("http://localhost:4000/api/v1/login", {
+    const res = await fetch(`${API_BASE}/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -103,7 +104,7 @@ async function handleSubmit(e) {
       
     // JWT is already stored in the HttpOnly cookie
     // Navigate to the dashboard
-    navigate(`/dashboard/${result.role}`, { replace: true });
+    navigate(result.role === "patient" ? "/" : `/dashboard/${result.role}`, { replace: true });
   } catch (error) {
     console.error("Login error:", error);
   }
@@ -119,7 +120,7 @@ async function handleGoogleLogin(credentialResponse) {
     }
 
     const res = await fetch(
-      "http://localhost:4000/api/v1/googlelogin",
+      `${API_BASE}/googlelogin`,
       {
         method: "POST",
         headers: {
@@ -162,7 +163,7 @@ async function handleGoogleLogin(credentialResponse) {
 
     console.log("Google login successful:", dataforslice);
 
-    navigate(`/dashboard/${result.user.role}`, {
+    navigate(result.user.role === "patient" ? "/" : `/dashboard/${result.user.role}`, {
       replace: true,
     });
 

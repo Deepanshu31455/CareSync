@@ -3,17 +3,11 @@ const http = require("http");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const mongoose=require('mongoose');
+const os = require("os");
 
 
 const app=express();
 const fileUpload=require("express-fileupload")
-app.use(fileUpload({
-    useTempFiles: true,
-    tempFileDir: "/tmp/"
-}));
-
-
-
 require("dotenv").config();
 const PORT=process.env.PORT ||3000;
 
@@ -26,6 +20,11 @@ app.use(cors({
   credentials: true,
 }));
 
+app.use(fileUpload({
+    useTempFiles: true,
+    tempFileDir: os.tmpdir(),
+    limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+}));
 
 app.use(express.json());
 app.use(cookieParser());

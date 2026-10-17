@@ -14,7 +14,7 @@ export default function PublicOnly({ children }) {
   if (user) {
     return (
       <Navigate
-        to={`/dashboard/${user.role}`}
+        to={user.role === "patient" ? "/" : `/dashboard/${user.role}`}
         replace
       /> 
     );

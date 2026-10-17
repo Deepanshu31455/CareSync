@@ -4,7 +4,7 @@ const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
 const Payment = require("../models/Payment");
 const { access } = require("../socket/identity");
-const { todayIST, isValidDate, isDoctorOpenOn, addDays } = require("../utils/dates");
+const { todayIST, isValidDate, isDoctorOpenOn, isDoctorBookableOn, addDays } = require("../utils/dates");
 const { createAppointment, publishChange, cancelWaiting, isDuplicate } = require("../services/queueService");
 const { BOOKING_WINDOW_DAYS } = require("./doctorSearchController");
 
@@ -37,9 +37,10 @@ function whyNot(doctor, date) {
   if (!isValidDate(date)) return "Choose a valid day.";
   const today = todayIST();
   if (date < today || date > addDays(today, BOOKING_WINDOW_DAYS)) {
-    return "You can book from today up to two weeks ahead.";
+    return `You can book from today up to ${BOOKING_WINDOW_DAYS} days ahead.`;
   }
   if (!isDoctorOpenOn(doctor, date, { strict: true })) return "The doctor is not consulting on that day.";
+  if (!isDoctorBookableOn(doctor, date)) return "The doctor's hours for today are over. Choose another day.";
   return null;
 }
 

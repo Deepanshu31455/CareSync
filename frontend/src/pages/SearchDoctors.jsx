@@ -10,7 +10,7 @@ import DoctorCard from "../components/search/DoctorCard";
 import DoctorModal from "../components/search/DoctorModal";
 import MyQueuePanel from "../components/search/MyQueuePanel";
 
-const WINDOW_DAYS = 14; // the same limit as the server
+const WINDOW_DAYS = 7; // the same limit as the server
 
 // The patient's page: follow today's queue, find a doctor, book.
 export default function SearchDoctors() {

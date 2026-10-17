@@ -109,6 +109,8 @@ API_KEY=your_cloudinary_api_key
 API_SECRET=your_cloudinary_api_secret
 ```
 
+The frontend also uses `VITE_API_URL` as the backend API base URL, including the `/api/v1` path (for example, `https://api.example.com/api/v1`). If it is omitted locally, requests use `http://localhost:3000/api/v1`.
+
 Depending on your email or auth setup, additional variables may also be required for OTP and mail sending.
 
 ## Running the project

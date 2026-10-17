@@ -1,6 +1,6 @@
 const Appointment = require("../models/Appointment");
 const Doctor = require("../models/Doctor");
-const { todayIST, isValidDate, isDoctorOpenOn, addDays, weekdayOf } = require("../utils/dates");
+const { todayIST, isValidDate, isDoctorOpenOn, isDoctorBookableOn, addDays, weekdayOf } = require("../utils/dates");
 const { summary } = require("../services/queueService");
 
 // What a patient may see about a doctor. No email, phone, licence number or password.
@@ -8,7 +8,7 @@ const CARD =
   "id fullName specialization qualifications experience affiliation consultationFee clinicAddress profilePhoto rating totalRatings workingHours";
 const DETAIL = `${CARD} facilities otherDescription directions googleExperience`;
 
-const BOOKING_WINDOW_DAYS = 14; // a patient can book today and up to this many days ahead
+const BOOKING_WINDOW_DAYS = 7;  // a patient can book today and up to this many days ahead
 const MAX_RESULTS = 20;
 const WEEK = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -23,7 +23,7 @@ function consultingDays(doctor) {
 
 // The doctor as a search result card (no database id)
 function toCard(doctor, date, queue) {
-  const open = isDoctorOpenOn(doctor, date, { strict: true });
+  const open = isDoctorBookableOn(doctor, date);
   return {
     id: doctor.id,
     fullName: doctor.fullName,
@@ -73,13 +73,13 @@ exports.searchDoctors = async (req, res) => {
 
     let doctors = found.filter((doctor) => doctor.id);
     if (req.query.consulting === "1") {
-      doctors = doctors.filter((doctor) => isDoctorOpenOn(doctor, date, { strict: true }));
+      doctors = doctors.filter((doctor) => isDoctorBookableOn(doctor, date));
     }
     doctors = doctors.slice(0, MAX_RESULTS);
 
     // How busy each doctor's day is: ONE grouped query for all of them
     const queues = new Map();
-    const ids = doctors.filter((d) => isDoctorOpenOn(d, date, { strict: true })).map((d) => d._id);
+    const ids = doctors.filter((d) => isDoctorBookableOn(d, date)).map((d) => d._id);
     if (ids.length > 0) {
       const rows = await Appointment.aggregate([
         { $match: { doctor: { $in: ids }, date, status: { $in: ["waiting", "in_consultation"] } } },
@@ -121,7 +121,7 @@ exports.getDoctor = async (req, res) => {
     const days = [];
     for (let i = 0; i <= BOOKING_WINDOW_DAYS; i++) {
       const date = addDays(today, i);
-      days.push({ date, weekday: weekdayOf(date), open: isDoctorOpenOn(doctor, date, { strict: true }) });
+      days.push({ date, weekday: weekdayOf(date), open: isDoctorBookableOn(doctor, date) });
     }
 
     const { nowServing, waiting } = await summary(doctor._id, today);

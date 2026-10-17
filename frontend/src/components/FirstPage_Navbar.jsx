@@ -2,18 +2,58 @@ import logo from "../assets/NewLogo.png";
 import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { logout } from "../redux/authSlice";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu } from "lucide-react";
+import { API_BASE } from "../config";
 
+
+// A photo can be saved as a plain link or as an object like { url } / { secure_url }.
+function photoUrl(value) {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  return value.url || value.secure_url || null;
+}
+
+// Finds the profile photo anywhere inside a profile response, whatever the response is called.
+function findPhoto(data, depth = 0) {
+  if (!data || typeof data !== "object" || depth > 4) return null;
+  if ("profilePhoto" in data) return photoUrl(data.profilePhoto);
+  for (const value of Object.values(data)) {
+    const found = findPhoto(value, depth + 1);
+    if (found) return found;
+  }
+  return null;
+}
 
 export default function FirstPage_Navbar() {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.authStore.user);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // The photo in the login data can be missing or out of date, so the profile is asked for it once.
+  const [fetchedPhoto, setFetchedPhoto] = useState(null);
+  const role = user?.role;
+  useEffect(() => {
+    if (!role) {
+      setFetchedPhoto(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`${API_BASE}/${role}/profile`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => !cancelled && setFetchedPhoto(findPhoto(data)))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [role]);
+
+  const photo = fetchedPhoto || photoUrl(user?.profilePhoto);
+  const initial = (user?.name || user?.fullName || "U").charAt(0).toUpperCase();
+
   async function handleLogout() {
     try {
-      const res = await fetch("http://localhost:4000/api/v1/logout", {
+      const res = await fetch(`${API_BASE}/logout`, {
         method: "POST",
         credentials: "include",
       });
@@ -73,15 +113,15 @@ export default function FirstPage_Navbar() {
             <>
               <Link to="/profile">
                 <div className="w-9 h-9 rounded-full overflow-hidden">
-                  {user.profilePhoto ? (
+                  {photo ? (
                     <img
-                      src={user.profilePhoto}
-                      alt={`${user.name || "User"} profile`}
+                      src={photo}
+                      alt={`${user.name || user.fullName || "User"} profile`}
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-brand-blue text-white font-semibold">
-                      {user.name?.charAt(0).toUpperCase() || "U"}
+                      {initial}
                     </div>
                   )}
                 </div>
