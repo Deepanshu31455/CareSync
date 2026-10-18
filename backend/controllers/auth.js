@@ -86,7 +86,7 @@ const auth = async (req, res) => {
     // Do NOT rely on client-supplied booleans
     payload.emailVerified = true;
     payload.phoneVerified = true; // Auto-passed until SMS gateway is active
-    payload.authMethod = "manual";
+    payload.authMethod = req.body.authMethod === "google" ? "google" : "manual";
 
     // new Model(...).save() runs the pre-save hook from
     // shared/baseUserFields.js, which hashes `password` before it's stored.

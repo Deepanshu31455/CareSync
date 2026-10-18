@@ -7,6 +7,7 @@ const client = new OAuth2Client(
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
 const Receptionist = require("../models/Receptionist");
+const Otp = require("../models/Otp");
 
 const { signToken, setAuthCookie } = require("../utils/jwt");
 
@@ -41,15 +42,27 @@ const verifyGoogleForRegistration = async (req, res) => {
       });
     }
 
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    // Mark email as verified for registration in MongoDB (valid for 30 minutes)
+    await Otp.deleteMany({ email: normalizedEmail });
+    await Otp.create({
+      email: normalizedEmail,
+      otp: "GOOGLE_VERIFIED",
+      verified: true,
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+      attempts: 0,
+    });
+
     return res.status(200).json({
       message: "Google verification successful",
 
       googleUser: {
         googleId: sub,
-        email,
+        email: normalizedEmail,
         name,
         picture,
-        emailVerified: email_verified,
+        emailVerified: true,
       },
     });
 
