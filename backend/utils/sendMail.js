@@ -23,7 +23,7 @@ async function sendMail({ to, subject, text, html }) {
       greetingTimeout: 10000,
       socketTimeout: 15000,
     });
-    fromAddress = `"CareSync" <${process.env.EMAIL_USER || brevoUser}>`;
+    fromAddress = `"CareSync" <${brevoUser}>`;
   } else {
     // 2. Fallback to Gmail SMTP (for localhost or hosts where SMTP ports are open)
     const emailUser = String(process.env.EMAIL_USER || "").trim();
