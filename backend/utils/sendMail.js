@@ -4,16 +4,24 @@ const nodemailer = require("nodemailer");
 // EMAIL_PASS must be a Gmail "app password" (16 characters), not the normal password.
 // Uses Gmail by default; set EMAIL_SERVICE in .env if you use another provider.
 async function sendMail({ to, subject, html }) {
+  const emailUser = String(process.env.EMAIL_USER || "").trim();
+  const emailPass = String(process.env.EMAIL_PASS || "").replace(/\s+/g, "");
+
   const transporter = nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
+      user: emailUser,
+      pass: emailPass,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
- 
+
   return transporter.sendMail({
-    from: `"CareSync" <${process.env.EMAIL_USER}>`,
+    from: `"CareSync" <${emailUser}>`,
     to,
     subject,
     html,
