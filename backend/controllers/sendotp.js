@@ -25,8 +25,7 @@ const sendotp = async (req, res) => {
 
     console.log(`[CareSync OTP] Verification code for ${email}: ${otp}`);
 
-    // Send email via Resend HTTPS API (Port 443 — never blocked on Render)
-    // or fallback to Nodemailer SMTP (localhost)
+    // Send email via Nodemailer
     await sendMail({
       to: email,
       subject: "CareSync Verification OTP",

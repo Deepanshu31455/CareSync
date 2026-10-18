@@ -1,68 +1,30 @@
 const nodemailer = require("nodemailer");
- 
-// Sends one email, using the same EMAIL_USER / EMAIL_PASS as the OTP email.
-// EMAIL_PASS must be a Gmail "app password" (16 characters), not the normal password.
-// Uses Gmail by default; set EMAIL_SERVICE in .env if you use another provider.
+
+// Sends email using Nodemailer with Gmail (or service specified in EMAIL_SERVICE).
+// EMAIL_PASS must be a 16-character Gmail App Password.
 async function sendMail({ to, subject, text, html }) {
-  const resendApiKey = (process.env.RESEND_API_KEY || "")
-    .trim()
-    .replace(/^["']|["']$/g, "") // strip accidental surrounding quotes
-    .replace(/^Bearer\s+/i, "")  // strip accidental "Bearer " prefix
-    .trim();
-
-  // 1. Resend HTTPS API (Port 443 — works seamlessly on Render Free Tier where SMTP is blocked)
-  if (resendApiKey) {
-    const fromAddress = process.env.EMAIL_FROM || "CareSync <onboarding@resend.dev>";
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: fromAddress,
-        to: Array.isArray(to) ? to : [to],
-        subject,
-        text: text || "",
-        html: html || (text ? `<p>${text}</p>` : ""),
-      }),
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(data.message || `Resend email error: ${res.statusText}`);
-    }
-    return { provider: "resend", id: data.id };
-  }
-
-  // 2. Nodemailer SMTP (for localhost or hosts where SMTP ports are not blocked)
   const emailUser = String(process.env.EMAIL_USER || "").trim();
   const emailPass = String(process.env.EMAIL_PASS || "").replace(/\s+/g, "");
 
   if (!emailUser || !emailPass) {
-    throw new Error("Email service not configured. Please set RESEND_API_KEY or EMAIL_USER and EMAIL_PASS.");
+    throw new Error("EMAIL_USER or EMAIL_PASS is missing in environment variables.");
   }
 
   const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    service: process.env.EMAIL_SERVICE || "gmail",
     auth: {
       user: emailUser,
       pass: emailPass,
     },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
   });
 
   return transporter.sendMail({
     from: `"CareSync" <${emailUser}>`,
-    to,
+    to: Array.isArray(to) ? to.join(", ") : to,
     subject,
-    text,
-    html,
+    text: text || "",
+    html: html || (text ? `<p>${text}</p>` : ""),
   });
 }
- 
+
 module.exports = { sendMail };
