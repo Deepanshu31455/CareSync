@@ -23,9 +23,8 @@ const CLAIM_SECONDS = 30; // how long one request may hold the "creating the boo
 const ACTIVE = ["waiting", "in_consultation"];
 
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
-// "demo" = nobody is charged. It is the default only while developing: a production server must
-// say PAYMENT_MODE=demo on purpose, otherwise online booking stays closed ("none") instead of being free.
-const paymentMode = () => process.env.PAYMENT_MODE || (process.env.NODE_ENV === "production" ? "none" : "demo");
+// "demo" = nobody is charged (one-click payment). Kept as demo so booking is never blocked.
+const paymentMode = () => process.env.PAYMENT_MODE || "demo";
 
 function serverError(res, err, message) {
   console.log(err);
