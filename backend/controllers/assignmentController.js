@@ -11,7 +11,23 @@ const { revokeQueueAccess } = require("../socket/emitter");
 /* ------------------------------------------------------------------ */
 
 const REQUEST_VALID_DAYS = 7; // the emailed link stops working after this
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+
+function getClientUrl(req) {
+  if (process.env.CLIENT_URL) {
+    return process.env.CLIENT_URL.replace(/\/+$/, "");
+  }
+  const origin = req?.headers?.origin || req?.headers?.referer;
+  if (origin && !origin.includes("localhost") && !origin.includes("127.0.0.1")) {
+    try {
+      const url = new URL(origin);
+      return url.origin;
+    } catch {}
+  }
+  if (process.env.NODE_ENV === "production" || process.env.RENDER) {
+    return "https://caresync-ph5d.onrender.com";
+  }
+  return "http://localhost:5173";
+}
 
 // What the other side is allowed to see about a person
 const DOCTOR_CARD = "id fullName specialization profilePhoto clinicAddress consultationFee";
@@ -171,7 +187,7 @@ exports.sendRequest = async (req, res) => {
     }
 
     // 2. Email the doctor. If that fails, remove the request so nothing is left hanging.
-    const link = `${CLIENT_URL}/assignment/respond?token=${token}`;
+    const link = `${getClientUrl(req)}/assignment/respond?token=${token}`;
     try {
       await sendMail({
         to: doctor.email,
