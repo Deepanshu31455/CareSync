@@ -1,21 +1,30 @@
+const crypto = require("crypto");
 const nodemailer = require("nodemailer");
-const Otp = require("../models/Otp"); // adjust path to wherever your model lives
+const bcrypt = require("bcryptjs");
+const Otp = require("../models/Otp");
 
 const sendotp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const rawEmail = req.body?.email;
+    if (!rawEmail) {
+      return res.status(400).json({ message: "Email is required" });
+    }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    const email = String(rawEmail).trim().toLowerCase();
 
-    // Remove any earlier OTP for this email first, so only the newest one is ever valid
-    await Otp.findOneAndDelete({ email });
-    await Otp.create({ email, otp, expiresAt });
+    // crypto.randomInt is a CSPRNG — far more unpredictable than Math.random()
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5-minute validity
 
-    console.log("OTP STORED:", email, otp);
+    // Hash before saving — even a DB dump won't expose the live OTP
+    const otpHash = await bcrypt.hash(otp, 10);
+
+    // Remove any previous OTPs for this email before inserting a fresh one
+    await Otp.deleteMany({ email });
+    await Otp.create({ email, otp: otpHash, expiresAt, verified: false, attempts: 0 });
 
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      service: process.env.EMAIL_SERVICE || "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -23,16 +32,16 @@ const sendotp = async (req, res) => {
     });
 
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `"CareSync" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "MedManage OTP",
-      text: `Your MedManage OTP is ${otp}`,
+      subject: "CareSync Verification OTP",
+      text: `Your CareSync verification OTP is ${otp}. It is valid for 5 minutes.`,
     });
 
-    res.status(200).json({ message: "OTP sent successfully" });
+    return res.status(200).json({ message: "OTP sent successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to send OTP" });
+    console.error("sendotp error:", error);
+    return res.status(500).json({ message: "Failed to send OTP" });
   }
 };
 

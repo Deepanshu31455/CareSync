@@ -1,3 +1,4 @@
+const fs = require("fs/promises");
 const cloudinary = require("cloudinary").v2;
 
 const Patient = require("../models/Patient");
@@ -162,6 +163,10 @@ exports.updatePhoto = async (req, res) => {
       { new: true }
     ).select(WITHOUT_RECORDS);
 
+    if (file.tempFilePath) {
+      fs.unlink(file.tempFilePath).catch(() => {});
+    }
+
     return res.status(200).json({
       success: true,
       profilePhoto: uploaded.secure_url,
@@ -169,6 +174,9 @@ exports.updatePhoto = async (req, res) => {
       message: "Profile photo updated successfully",
     });
   } catch (err) {
+    if (req.files?.imageFile?.tempFilePath) {
+      fs.unlink(req.files.imageFile.tempFilePath).catch(() => {});
+    }
     return sendError(res, err, "Could not update the photo");
   }
 };
@@ -275,6 +283,10 @@ function addItem(kind) {
         throw err;
       }
 
+      if (file.tempFilePath) {
+        fs.unlink(file.tempFilePath).catch(() => {});
+      }
+
       // The item we just added is the last one in the list
       const added = updated[kind][updated[kind].length - 1];
 
@@ -284,6 +296,9 @@ function addItem(kind) {
         message: `${config.label} uploaded successfully`,
       });
     } catch (err) {
+      if (req.files?.file?.tempFilePath) {
+        fs.unlink(req.files.file.tempFilePath).catch(() => {});
+      }
       return sendError(res, err, `Could not upload the ${config.label.toLowerCase()}`);
     }
   };

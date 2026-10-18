@@ -63,7 +63,7 @@ const {
 } = require("../controllers/queueController");
 
 // ─── Auth / general ──────────────────────────────────────────────────────────
-router.get( "/me",              (req, res, next) => { console.log("HIT /me"); next(); }, getMe);
+router.get( "/me",              getMe);
 router.post("/send-otp",        sendotp);
 router.post("/verify-otp",      verifyotp);
 router.post("/register/:role",  auth);

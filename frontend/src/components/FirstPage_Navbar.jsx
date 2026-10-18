@@ -34,19 +34,18 @@ export default function FirstPage_Navbar() {
   const [fetchedPhoto, setFetchedPhoto] = useState(null);
   const role = user?.role;
   useEffect(() => {
-    if (!role) {
-      setFetchedPhoto(null);
-      return;
-    }
+    if (!role || user?.profilePhoto) return;
     let cancelled = false;
     fetch(`${API_BASE}/${role}/profile`, { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => !cancelled && setFetchedPhoto(findPhoto(data)))
+      .then((data) => {
+        if (!cancelled && data) setFetchedPhoto(findPhoto(data));
+      })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [role]);
+  }, [role, user?.profilePhoto]);
 
   const photo = fetchedPhoto || photoUrl(user?.profilePhoto);
   const initial = (user?.name || user?.fullName || "U").charAt(0).toUpperCase();

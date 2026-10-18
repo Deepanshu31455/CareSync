@@ -1,3 +1,4 @@
+const fs = require("fs/promises");
 const cloudinary = require("cloudinary").v2;
 
 const Receptionist = require("../models/Receptionist");
@@ -86,6 +87,10 @@ exports.updatePhoto = async (req, res) => {
       { new: true }
     );
 
+    if (file.tempFilePath) {
+      fs.unlink(file.tempFilePath).catch(() => {});
+    }
+
     return res.status(200).json({
       success: true,
       profilePhoto: uploaded.secure_url,
@@ -93,6 +98,9 @@ exports.updatePhoto = async (req, res) => {
       message: "Profile photo updated successfully",
     });
   } catch (err) {
+    if (req.files?.imageFile?.tempFilePath) {
+      fs.unlink(req.files.imageFile.tempFilePath).catch(() => {});
+    }
     return sendError(res, err, "Could not update the photo");
   }
 };

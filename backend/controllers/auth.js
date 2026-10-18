@@ -1,3 +1,4 @@
+const Otp = require("../models/Otp");
 const Patient = require("../models/Patient");
 const Doctor = require("../models/Doctor");
 const Receptionist = require("../models/Receptionist");
@@ -8,6 +9,38 @@ const MODEL_BY_ROLE = {
   doctor: Doctor,
   receptionist: Receptionist,
 };
+
+// Whitelist of fields allowed during registration.
+// Matches baseUserFields + role-specific schemas (Patient, Doctor, Receptionist)
+// while blocking protected internal fields (prescriptions, consultations, reviews, ratings).
+const ALLOWED_FIELDS = {
+  patient: [
+    "fullName", "email", "password", "phone",
+    "dob", "gender", "address",
+    "bloodGroup", "emergencyContact", "knownConditions",
+    "profilePhoto",
+  ],
+  doctor: [
+    "fullName", "email", "password", "phone",
+    "dob", "gender", "address",
+    "specialization", "licenseNumber", "experience",
+    "affiliation", "qualifications", "consultationFee",
+    "phone1", "phone2", "clinicAddress", "workingHours",
+    "profilePhoto",
+  ],
+  receptionist: [
+    "fullName", "email", "password", "phone",
+    "dob", "gender", "address",
+    "staffCode", "profilePhoto",
+  ],
+};
+
+function pickAllowed(body, role) {
+  const allowed = ALLOWED_FIELDS[role] || [];
+  return Object.fromEntries(
+    Object.entries(body).filter(([key]) => allowed.includes(key))
+  );
+}
 
 const auth = async (req, res) => {
   try {
@@ -33,22 +66,34 @@ const auth = async (req, res) => {
       });
     }
 
-    const { emailVerified, phoneVerified } = req.body;
-    if (!emailVerified || !phoneVerified) {
-      // Belt-and-suspenders — the frontend already blocks this, but the
-      // API shouldn't trust the client alone to enforce it.
-      return res.status(400).json({ message: "Email and phone must be verified first" });
+    const normalizedEmail = String(req.body.email || "").trim().toLowerCase();
+
+    // 1. Server-side email OTP verification:
+    // Must find an Otp record that was verified via /verify-otp within the valid TTL window.
+    const verifiedRecord = await Otp.findOne({ email: normalizedEmail, verified: true });
+    if (!verifiedRecord) {
+      return res.status(400).json({
+        message: "Email verification is missing or expired. Please verify your email via OTP.",
+      });
     }
 
-    // Sanitize payload to prevent overwriting internal/protected fields
-    const payload = { ...req.body, id, role };
-    delete payload.rating;
-    delete payload.totalRatings;
-    delete payload.reviews;
+    // 2. Build payload from allowlist
+    const payload = pickAllowed(req.body, role);
+    payload.id = id;
+    payload.role = role;
+
+    // 3. Set verification flags directly on the server after server-side check succeeds
+    // Do NOT rely on client-supplied booleans
+    payload.emailVerified = true;
+    payload.phoneVerified = true; // Auto-passed until SMS gateway is active
+    payload.authMethod = "manual";
 
     // new Model(...).save() runs the pre-save hook from
     // shared/baseUserFields.js, which hashes `password` before it's stored.
     const account = await Model.create(payload);
+
+    // Clean up verified OTP record now that account is created
+    await Otp.deleteMany({ email: normalizedEmail }).catch(() => {});
 
     // Never echo the password hash back, even though `select: false`
     // already keeps it out of normal queries.

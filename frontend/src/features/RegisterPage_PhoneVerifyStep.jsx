@@ -1,79 +1,29 @@
-import { useState } from "react";
-import Field from "../components/FirstPage/RegisterPage_Field";
-import { inputClass } from "../utils/utils";
+import { useEffect } from "react";
 
+// TODO: Phone verification via SMS (Twilio / MSG91) will be implemented in a future release.
+// For now, the phone number entered by the user is accepted as-is and phoneVerified is
+// automatically set to true on the client. The backend register route also auto-passes
+// phone verification for the same reason.
 export default function PhoneVerifyStep({ register, setValue, watch, errors }) {
   const phone = watch("phone");
   const phoneVerified = watch("phoneVerified");
 
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpInput, setOtpInput] = useState("");
-  const [generatedOtp, setGeneratedOtp] = useState("");
-  const [otpError, setOtpError] = useState("");
+  register("phoneVerified", { validate: (v) => v === true || "Phone number is required" });
 
-  register("phoneVerified", { validate: (v) => v === true || "Verify your phone number to finish" });
-
-  function sendOtp() {
-    // TODO: replace with a real "send OTP to phone" API call
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(code);
-    setOtpSent(true);
-    setOtpError("");
-    console.log("Demo phone OTP:", code);
-  }
-
-  function verifyOtp() {
-    if (otpInput === generatedOtp) {
-      setValue("phoneVerified", true, { shouldValidate: true });
-      setOtpError("");
-    } else {
-      setOtpError("Incorrect code — try again");
-    }
-  }
-
-  if (phoneVerified) {
-    return (
-      <div className="px-5 py-4 rounded-xl border border-brand-teal bg-surfacealt">
-        <p className="text-[0.92rem] font-medium text-ink">✓ Phone number verified</p>
-        <p className="text-[0.82rem] text-inksoft">{phone}</p>
-      </div>
-    );
-  }
+  // Auto-pass: mark verified as soon as the step mounts.
+  // Replace this with a real SMS OTP call when the gateway is ready.
+  useEffect(() => {
+    setValue("phoneVerified", true, { shouldValidate: true });
+  }, [setValue]);
 
   return (
-    <div className="space-y-5">
-      <p className="text-[0.92rem] text-inksoft">
-        We'll send a one-time code to <span className="font-medium text-ink">{phone}</span> to confirm it's yours.
+    <div className="px-5 py-4 rounded-xl border border-brand-teal bg-surfacealt space-y-2">
+      <p className="text-[0.92rem] font-medium text-ink">✓ Phone number accepted</p>
+      <p className="text-[0.82rem] text-inksoft">{phone}</p>
+      <p className="text-[0.75rem] text-inksoft italic">
+        SMS verification will be available in a future update.
       </p>
-
-      {!otpSent ? (
-        <button type="button" onClick={sendOtp} className="btn-primary w-full">
-          Send OTP
-        </button>
-      ) : (
-        <Field label="Enter the 6-digit code">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              value={otpInput}
-              onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              placeholder="000000"
-              className={`${inputClass} border-border`}
-            />
-            <button type="button" onClick={verifyOtp} className="shrink-0 px-4 rounded-lg bg-brand-blue text-white text-[0.86rem] font-medium">
-              Verify
-            </button>
-          </div>
-          {otpError && <p className="text-[0.78rem] text-brand-coral mt-1.5">{otpError}</p>}
-          <button type="button" onClick={sendOtp} className="text-[0.8rem] font-semibold text-brand-blue mt-2">
-            Resend code
-          </button>
-        </Field>
-      )}
-
-      {errors.phoneVerified && !otpSent && <p className="text-[0.78rem] text-brand-coral">{errors.phoneVerified.message}</p>}
     </div>
   );
 }
+

@@ -1,3 +1,4 @@
+const fs = require("fs/promises");
 const cloudinary = require("cloudinary").v2;
 const mongoose = require("mongoose");
 
@@ -180,8 +181,17 @@ exports.addRecord = async (req, res) => {
     const result = await Patient.updateOne({ _id: appointment.patient }, { $push: { [req.params.kind]: item } });
     if (result && result.matchedCount === 0) throw new Error("The patient account no longer exists.");
 
+    if (file.tempFilePath) {
+      fs.unlink(file.tempFilePath).catch(() => {});
+    }
+
     return res.status(201).json({ success: true, message: `${config.label} added`, item: view(req.params.kind, item) });
   } catch (err) {
+    const file = req.files && req.files.file;
+    if (file?.tempFilePath) {
+      fs.unlink(file.tempFilePath).catch(() => {});
+    }
+
     // The file was stored but the record was not saved: do not leave the file behind
     if (uploaded) {
       await cloudinary.uploader

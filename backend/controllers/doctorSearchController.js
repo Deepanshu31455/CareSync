@@ -55,7 +55,7 @@ exports.searchDoctors = async (req, res) => {
     const date = req.query.date || today;
 
     if (!isValidDate(date) || date < today || date > addDays(today, BOOKING_WINDOW_DAYS)) {
-      return fail(res, 400, "Choose a day from today up to two weeks ahead.");
+      return fail(res, 400, `Choose a day from today up to ${BOOKING_WINDOW_DAYS} days ahead.`);
     }
 
     const filter = { emailVerified: true };

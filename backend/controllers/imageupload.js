@@ -1,5 +1,4 @@
 const fs = require("fs/promises");
-const mongoose = require("mongoose");
 const cloudinary = require("cloudinary").v2;
 
 const Doctor = require("../models/Doctor");
@@ -65,9 +64,9 @@ async function hasValidImageSignature(file) {
 
     return isJpeg || isPng || isWebp;
   } catch (err) {
-    console.warn("Signature validation failed, skipping magic check:", err.message);
-    // Don't crash on filesystem lock issues; let Cloudinary do full validation
-    return true;
+    console.warn("Signature validation failed:", err.message);
+    // Fail closed — a filesystem error is not a reason to accept an unknown file.
+    return false;
   }
 }
 
@@ -97,23 +96,18 @@ exports.imageUpload = async (req, res) => {
       });
     }
 
-    // 2. Identify user account
-    let user = null;
+    // 2. Identify user account — strictly bound to the authenticated user only.
+    //    Never trust a client-supplied ID: that would let any logged-in user
+    //    overwrite another user's profile photo.
     const accountId = req.user?.accountId;
-    const bodyId = req.body?.id;
-
-    if (accountId) {
-      user = await Model.findById(accountId);
+    if (!accountId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required to upload a profile photo",
+      });
     }
 
-    if (!user && bodyId) {
-      const query = [{ id: bodyId }];
-      if (mongoose.isValidObjectId(bodyId)) {
-        query.push({ _id: bodyId });
-      }
-      user = await Model.findOne({ $or: query });
-    }
-
+    const user = await Model.findById(accountId);
     if (!user) {
       return res.status(404).json({
         success: false,

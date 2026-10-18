@@ -1,11 +1,10 @@
 import { useState } from "react";
 import logo from "../assets/NewLogo.png";
-import { useDispatch,useSelector } from "react-redux";
-import { useNavigate,Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useNavigate, Link } from "react-router-dom";
 import { setUser } from "../redux/authSlice";
 import { GoogleLogin } from "@react-oauth/google";
 import { API_BASE } from "../config";
-
 
 const ROLES = [
   { id: "patient", label: "Patient", digit: "1" },
@@ -13,115 +12,107 @@ const ROLES = [
   { id: "doctor", label: "Doctor", digit: "3" },
 ];
 
-function GoogleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-      <path
-        fill="#4285F4"
-        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.56 2.7-3.87 2.7-6.62Z"
-      />
-      <path
-        fill="#34A853"
-        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.95v2.33A9 9 0 0 0 9 18Z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.95A9 9 0 0 0 0 9c0 1.45.35 2.83.95 4.03l3-2.33Z"
-      />
-      <path
-        fill="#EA4335"
-        d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .95 4.97l3 2.33C4.66 5.17 6.65 3.58 9 3.58Z"
-      />
-    </svg>
-  );
-}
-
 function LoginCard() {
-    const user = useSelector((state) => state.authStore.user);//only check error
-  const navigate=useNavigate();
-  const dispatch=useDispatch();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [showForm, setShowForm] = useState(false);
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [detectedRole, setDetectedRole] = useState(null);
   const [googleError, setGoogleError] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   function handleIdChange(e) {
     const value = e.target.value;
-
     setId(value);
+    setLoginError("");
 
     // Only detect role when the first character is 1, 2, or 3
     const firstDigit = value.charAt(0);
-
     const role = ROLES.find((r) => r.digit === firstDigit);
 
     setDetectedRole(role || null);
   }
 
-async function handleSubmit(e) {
-  e.preventDefault();
-
-  // 1. Check whether a valid role was detected
-  if (!detectedRole) {
-    return;
+  function handlePasswordChange(e) {
+    setPassword(e.target.value);
+    setLoginError("");
   }
 
-  // 2. Send login information to backend
-  try {
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoginError("");
 
-    //basic syntax to interact with backend
-    const res = await fetch(`${API_BASE}/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        id,
-        password,
-      }),
-    });
-
-    const result = await res.json();
-
-    // 3. Login failed
-    if (!res.ok) {
-      console.log(result.message);
+    // 1. Check whether a valid role was detected
+    if (!detectedRole) {
+      setLoginError("Please enter a valid CareSync ID starting with 1, 2, or 3.");
       return;
     }
 
-    // 4. Login successful
-//    console.log("Logged in:", result);
-    const dataforslice = {
-      id: result.id,
-      name: result.name,
-      email: result.email,
-      role: result.role,
-    };
+    if (!password) {
+      setLoginError("Please enter your password.");
+      return;
+    }
+
+    // 2. Send login information to backend
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_BASE}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          id,
+          password,
+        }),
+      });
+
+      const result = await res.json();
+
+      // 3. Login failed
+      if (!res.ok) {
+        setLoginError(result.message || "Invalid ID or password. Please try again.");
+        return;
+      }
+
+      // 4. Login successful - include profilePhoto
+      const dataforslice = {
+        id: result.id,
+        name: result.name,
+        email: result.email,
+        role: result.role,
+        profilePhoto: result.profilePhoto || "",
+      };
+
       dispatch(setUser(dataforslice));
-      console.log("Redux user dispatched:", dataforslice);
-      
-    // JWT is already stored in the HttpOnly cookie
-    // Navigate to the dashboard
-    navigate(result.role === "patient" ? "/" : `/dashboard/${result.role}`, { replace: true });
-  } catch (error) {
-    console.error("Login error:", error);
-  }
-}
-async function handleGoogleLogin(credentialResponse) {
-  try {
-    const credential = credentialResponse?.credential;
 
-    if (!credential) {
-      console.error("No Google credential received");
-      setGoogleError("Email is not registered.");
-      return;
+      // Navigate to the dashboard or home
+      navigate(result.role === "patient" ? "/" : `/dashboard/${result.role}`, { replace: true });
+    } catch (error) {
+      console.error("Login error:", error);
+      setLoginError("Cannot connect to server. Please check your internet connection.");
+    } finally {
+      setSubmitting(false);
     }
+  }
 
-    const res = await fetch(
-      `${API_BASE}/googlelogin`,
-      {
+  async function handleGoogleLogin(credentialResponse) {
+    setGoogleError("");
+    setLoginError("");
+
+    try {
+      const credential = credentialResponse?.credential;
+
+      if (!credential) {
+        console.error("No Google credential received");
+        setGoogleError("Email is not registered.");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/googlelogin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -130,48 +121,48 @@ async function handleGoogleLogin(credentialResponse) {
         body: JSON.stringify({
           credential,
         }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        const message = result?.message || "Email is not registered.";
+        const normalizedMessage = message.toLowerCase();
+
+        if (
+          normalizedMessage.includes("not registered") ||
+          normalizedMessage.includes("does not exist") ||
+          normalizedMessage.includes("register first")
+        ) {
+          setGoogleError("Email is not registered.");
+        } else {
+          setGoogleError(message);
+        }
+        console.error("Google login failed:", message);
+        return;
       }
-    );
 
-    const result = await res.json();
+      setGoogleError("");
 
-    if (!res.ok) {
-      const message = result?.message || "Email is not registered.";
-      const normalizedMessage = message.toLowerCase();
+      // Backend has verified Google and created your JWT cookie
+      const dataforslice = {
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        role: result.user.role,
+        profilePhoto: result.user.profilePhoto || "",
+      };
 
-      if (normalizedMessage.includes("not registered") || normalizedMessage.includes("does not exist") || normalizedMessage.includes("register first")) {
-        setGoogleError("Email is not registered.");
-      } else {
-        setGoogleError(message);
-      }
-      console.error("Google login failed:", message);
-      return;
+      dispatch(setUser(dataforslice));
+
+      navigate(result.user.role === "patient" ? "/" : `/dashboard/${result.user.role}`, {
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Google login error:", error);
+      setGoogleError("Email is not registered.");
     }
-
-    setGoogleError("");
-
-    // Backend has verified Google and created your JWT cookie
-    const dataforslice = {
-      id: result.user.id,
-      name: result.user.name,
-      email: result.user.email,
-      role: result.user.role,
-      profilePhoto:result.user.profilePhoto,
-    };
-
-    dispatch(setUser(dataforslice));
-
-    console.log("Google login successful:", dataforslice);
-
-    navigate(result.user.role === "patient" ? "/" : `/dashboard/${result.user.role}`, {
-      replace: true,
-    });
-
-  } catch (error) {
-    console.error("Google login error:", error);
-    setGoogleError("Email is not registered.");
   }
-}
 
   return (
     <article className="relative max-w-[520px] mx-auto overflow-hidden bg-surface border border-border rounded-2xl p-8 shadow-card">
@@ -193,17 +184,17 @@ async function handleGoogleLogin(credentialResponse) {
       </p>
 
       <div className="space-y-3">
-      <GoogleLogin
-        onSuccess={handleGoogleLogin}
-        onError={() => {
-          console.log("Google Login Failed");
-          setGoogleError("Email is not registered.");
-        }}
-      />
+        <GoogleLogin
+          onSuccess={handleGoogleLogin}
+          onError={() => {
+            console.log("Google Login Failed");
+            setGoogleError("Email is not registered.");
+          }}
+        />
 
-      {googleError && (
-        <p className="text-[0.82rem] font-medium text-red-600 mt-1">{googleError}</p>
-      )}
+        {googleError && (
+          <p className="text-[0.82rem] font-medium text-red-600 mt-1">{googleError}</p>
+        )}
 
         <button
           type="button"
@@ -216,6 +207,13 @@ async function handleGoogleLogin(credentialResponse) {
 
         {showForm && (
           <form className="pt-3 space-y-3" onSubmit={handleSubmit}>
+            {loginError && (
+              <div className="rounded-lg bg-red-50 border border-red-200 px-3.5 py-2.5 text-[0.84rem] text-red-600 font-medium flex items-center gap-2">
+                <span>⚠️</span>
+                <span>{loginError}</span>
+              </div>
+            )}
+
             <div>
               <label
                 htmlFor="login-id"
@@ -251,7 +249,7 @@ async function handleGoogleLogin(credentialResponse) {
 
               <input
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 id="login-password"
                 type="password"
                 autoComplete="current-password"
@@ -262,10 +260,12 @@ async function handleGoogleLogin(credentialResponse) {
 
             <button
               type="submit"
-              disabled={!detectedRole}
+              disabled={!detectedRole || submitting}
               className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {detectedRole
+              {submitting
+                ? "Logging in..."
+                : detectedRole
                 ? `Log in as ${detectedRole.label}`
                 : "Enter a valid ID"}
             </button>
@@ -281,13 +281,13 @@ export default function LoginPage() {
     <div className="min-h-screen bg-bg">
       <header className="border-b border-border">
         <div className="max-w-content mx-auto px-6 md:px-8 py-5 flex items-center justify-between">
-          <a href="/" aria-label="CareSync home">
+          <Link to="/" aria-label="CareSync home">
             <img
               src={logo}
               alt="CareSync logo"
               className="h-9 w-auto"
             />
-          </a>
+          </Link>
 
           <Link
             to="/"

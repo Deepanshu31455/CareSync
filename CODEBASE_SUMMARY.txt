@@ -1,0 +1,740 @@
+================================================================================
+                            CARESYNC CODEBASE SUMMARY
+                 Comprehensive Architecture, Structure & File Index
+================================================================================
+
+1. PROJECT OVERVIEW
+--------------------------------------------------------------------------------
+CareSync is a full-stack Healthcare Clinic Management & Real-Time Queue System.
+It streamlines clinic operations across three distinct user roles:
+  - Patients: Search doctors, book physical/video appointments, view live queue
+    position & estimated wait time, manage personal health records (prescriptions,
+    lab reports, medical bills, past consultations).
+  - Doctors: Manage personal clinic profiles, working hours, and consultation fees;
+    run live clinic consultation workspaces (calling next patient, starting/ending
+    consultations, writing notes/records); invite and manage receptionists.
+  - Receptionists: Manage clinic queue desks for multiple assigned doctors, issue
+    walk-in tokens, call and complete patient visits, reschedule appointments, and
+    upload paper prescriptions, bills, and test reports.
+
+Technology Stack:
+  - Backend: Node.js, Express.js, MongoDB (Mongoose), Socket.IO (WebSockets),
+    Cloudinary (Secure asset storage), Nodemailer (Email verification),
+    Bcryptjs (Password & OTP hashing), JWT (HttpOnly Cookie-based authentication).
+  - Frontend: React 19, Vite, Tailwind CSS, Redux Toolkit, React Router v7,
+    Socket.IO Client, Lucide React / SVG icons.
+
+================================================================================
+2. CODEBASE TREE STRUCTURE
+================================================================================
+
+Mega Project/
+├── backend/
+│   ├── config/
+│   │   ├── cloudinary.js
+│   │   └── database.js
+│   ├── controllers/
+│   │   ├── assignmentController.js
+│   │   ├── auth.js
+│   │   ├── auththroughcookie.js
+│   │   ├── bookingController.js
+│   │   ├── doctorController.js
+│   │   ├── doctorPatientController.js
+│   │   ├── doctorSearchController.js
+│   │   ├── googleauth.js
+│   │   ├── imageupload.js
+│   │   ├── login.js
+│   │   ├── logout.js
+│   │   ├── patientController.js
+│   │   ├── queueController.js
+│   │   ├── receptionistController.js
+│   │   ├── recordsController.js
+│   │   ├── saveuser.js
+│   │   ├── sendotp.js
+│   │   └── verifyotp.js
+│   ├── middlewares/
+│   │   ├── authMiddleware.js
+│   │   ├── loadAccount.js
+│   │   ├── loadPatient.js
+│   │   ├── queueAccess.js
+│   │   └── resolveDoctor.js
+│   ├── models/
+│   │   ├── Appointment.js
+│   │   ├── Assignment.js
+│   │   ├── baseUserFields.js
+│   │   ├── DayCounter.js
+│   │   ├── Doctor.js
+│   │   ├── Otp.js
+│   │   ├── Patient.js
+│   │   ├── Payment.js
+│   │   └── Receptionist.js
+│   ├── routes/
+│   │   └── route.js
+│   ├── services/
+│   │   ├── queueService.js
+│   │   └── recordsService.js
+│   ├── socket/
+│   │   ├── access.js
+│   │   ├── emitter.js
+│   │   ├── identity.js
+│   │   └── index.js
+│   ├── utils/
+│   │   ├── dates.js
+│   │   ├── jwt.js
+│   │   ├── sendMail.js
+│   │   └── signedUrl.js
+│   ├── .env
+│   ├── index.js
+│   ├── package.json
+│   └── read.md
+│
+├── frontend/
+│   ├── public/
+│   │   ├── _redirects
+│   │   ├── favicon.svg
+│   │   └── icons.svg
+│   ├── src/
+│   │   ├── assets/
+│   │   │   ├── MyLogo.png
+│   │   │   ├── NewLogo.png
+│   │   │   ├── react.svg
+│   │   │   └── vite.svg
+│   │   ├── components/
+│   │   │   ├── AuthInitialize.jsx
+│   │   │   ├── FirstPage_Footer.jsx
+│   │   │   ├── FirstPage_Navbar.jsx
+│   │   │   ├── icons.jsx
+│   │   │   ├── ProtectedRoutes.jsx
+│   │   │   ├── PublicRoutes.jsx
+│   │   │   ├── doctorProfile/
+│   │   │   │   ├── AboutSection.jsx
+│   │   │   │   ├── constants.js
+│   │   │   │   ├── ContactSection.jsx
+│   │   │   │   ├── DirectionsSection.jsx
+│   │   │   │   ├── FacilitiesSection.jsx
+│   │   │   │   ├── FeesSection.jsx
+│   │   │   │   ├── PhotoLightbox.jsx
+│   │   │   │   ├── profileForm.js
+│   │   │   │   ├── ProfileHeader.jsx
+│   │   │   │   ├── ProfileNavbar.jsx
+│   │   │   │   ├── ProfilePhoto.jsx
+│   │   │   │   ├── RatingsSection.jsx
+│   │   │   │   ├── StaffSection.jsx
+│   │   │   │   ├── timeUtils.js
+│   │   │   │   ├── ui.jsx
+│   │   │   │   └── WorkingHoursSection.jsx
+│   │   │   ├── doctorWorkspace/
+│   │   │   │   ├── DoctorNavbar.jsx
+│   │   │   │   ├── DoctorQueue.jsx
+│   │   │   │   ├── PatientPanel.jsx
+│   │   │   │   └── WorkspaceTabs.jsx
+│   │   │   ├── FirstPage/
+│   │   │   │   ├── FirstPage_About.jsx
+│   │   │   │   ├── FirstPage_FAQ.jsx
+│   │   │   │   ├── FirstPage_Features.jsx
+│   │   │   │   ├── FirstPage_Hero.jsx
+│   │   │   │   ├── FirstPage_HowItWorks.jsx
+│   │   │   │   ├── FirstPage_Testimonials.jsx
+│   │   │   │   ├── FirstPage_TrustBar.jsx
+│   │   │   │   └── RegisterPage_Field.jsx
+│   │   │   ├── patientProfile/
+│   │   │   │   ├── BillsTab.jsx
+│   │   │   │   ├── constants.js
+│   │   │   │   ├── ConsultationsTab.jsx
+│   │   │   │   ├── DocumentsTab.jsx
+│   │   │   │   ├── helpers.js
+│   │   │   │   ├── PersonalInfoTab.jsx
+│   │   │   │   ├── PhotoLightbox.jsx
+│   │   │   │   ├── ProfileHeader.jsx
+│   │   │   │   ├── ui.jsx
+│   │   │   │   └── UploadForm.jsx
+│   │   │   ├── queueDesk/
+│   │   │   │   ├── constants.js
+│   │   │   │   ├── DoctorPicker.jsx
+│   │   │   │   ├── NowServingCard.jsx
+│   │   │   │   ├── QueueRow.jsx
+│   │   │   │   ├── RescheduleDialog.jsx
+│   │   │   │   ├── UpcomingDays.jsx
+│   │   │   │   └── WalkInForm.jsx
+│   │   │   ├── receptionistProfile/
+│   │   │   │   ├── AddDoctorPanel.jsx
+│   │   │   │   ├── constants.js
+│   │   │   │   ├── DoctorRow.jsx
+│   │   │   │   ├── helpers.js
+│   │   │   │   ├── PersonalInfoTab.jsx
+│   │   │   │   ├── RequestsTab.jsx
+│   │   │   │   └── ServingDoctorsTab.jsx
+│   │   │   ├── records/
+│   │   │   │   ├── constants.js
+│   │   │   │   └── RecordsDialog.jsx
+│   │   │   ├── search/
+│   │   │   │   ├── DoctorCard.jsx
+│   │   │   │   ├── DoctorModal.jsx
+│   │   │   │   ├── MyQueuePanel.jsx
+│   │   │   │   └── SearchBar.jsx
+│   │   │   └── shared/
+│   │   │       ├── ConfirmDialog.jsx
+│   │   │       ├── constants.js
+│   │   │       ├── helpers.js
+│   │   │       ├── PhotoLightbox.jsx
+│   │   │       ├── ProfileHeader.jsx
+│   │   │       └── ui.jsx
+│   │   ├── config/
+│   │   │   └── index.js
+│   │   ├── data/
+│   │   │   └── trustAndLegal.js
+│   │   ├── features/
+│   │   │   ├── RegisterPage_AccountStep.jsx
+│   │   │   ├── RegisterPage_constants.js
+│   │   │   ├── RegisterPage_DetailsStep.jsx
+│   │   │   ├── RegisterPage_EmailStep.jsx
+│   │   │   ├── RegisterPage_PersonalStep.jsx
+│   │   │   ├── RegisterPage_PhoneVerifyStep.jsx
+│   │   │   ├── RegisterPage_RoleStep.jsx
+│   │   │   └── RegisterPage_Stepper.jsx
+│   │   ├── hooks/
+│   │   │   ├── useDeskDoctors.js
+│   │   │   ├── useDoctorBooking.js
+│   │   │   ├── useDoctorProfile.js
+│   │   │   ├── useDoctorSearch.js
+│   │   │   ├── useDoctorSelf.js
+│   │   │   ├── useDoctorStaff.js
+│   │   │   ├── useMyBookings.js
+│   │   │   ├── usePatientInfo.js
+│   │   │   ├── usePatientProfile.js
+│   │   │   ├── useQueue.js
+│   │   │   ├── useQueueDesk.js
+│   │   │   ├── useReceptionistProfile.js
+│   │   │   ├── useUpcoming.js
+│   │   │   └── useVisitRecords.js
+│   │   ├── pages/
+│   │   │   ├── AssignmentResponse.jsx
+│   │   │   ├── DoctorPhysical.jsx
+│   │   │   ├── DoctorProfile.jsx
+│   │   │   ├── DoctorVideo.jsx
+│   │   │   ├── FirstPage.jsx
+│   │   │   ├── LoginPage.jsx
+│   │   │   ├── PatientProfile.jsx
+│   │   │   ├── ReceptionistDashboard.jsx
+│   │   │   ├── ReceptionistProfile.jsx
+│   │   │   ├── RegisterPage.jsx
+│   │   │   ├── SearchDoctors.jsx
+│   │   │   ├── SocketTest.jsx
+│   │   │   └── TrustAndLegalPage.jsx
+│   │   ├── redux/
+│   │   │   ├── authSlice.js
+│   │   │   ├── doctorSlice.js
+│   │   │   ├── patientSlice.js
+│   │   │   ├── queueSlice.js
+│   │   │   ├── receptionistSlice.js
+│   │   │   └── store.js
+│   │   ├── utils/
+│   │   │   ├── dates.js
+│   │   │   └── utils.js
+│   │   ├── App.css
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   ├── main.jsx
+│   │   └── socket.js
+│   ├── .env
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package.json
+│   ├── vercel.json
+│   └── vite.config.js
+│
+├── .gitignore
+├── CODEBASE_SUMMARY.txt
+└── README.md
+
+================================================================================
+3. DETAILED FILE-BY-FILE DIRECTORY
+================================================================================
+
+--------------------------------------------------------------------------------
+BACKEND ROOT & CONFIGURATION
+--------------------------------------------------------------------------------
+- backend/index.js
+  Main server entry point. Configures Express app, CORS, fileUpload middleware,
+  cookie-parser, and JSON parsers. Connects to MongoDB asynchronously before
+  starting HTTP server. Initializes Socket.IO and mounts API routes under /api/v1.
+
+- backend/package.json
+  Backend project metadata and npm dependencies (express, mongoose, socket.io,
+  jsonwebtoken, bcryptjs, cloudinary, express-fileupload, nodemailer, dotenv, cors).
+
+- backend/config/database.js
+  MongoDB connection utility using Mongoose. Returns a connection promise so
+  index.js can await database readiness before serving requests.
+
+- backend/config/cloudinary.js
+  Configures Cloudinary v2 SDK using CLOUD_NAME, API_KEY, and API_SECRET from .env.
+
+- backend/read.md
+  Developer documentation covering server port settings and notes on auth routes.
+
+--------------------------------------------------------------------------------
+BACKEND MODELS (DATABASE SCHEMAS)
+--------------------------------------------------------------------------------
+- backend/models/baseUserFields.js
+  Shared Mongoose schema plugin for all user types. Defines common fields:
+  6-digit custom ID, fullName, email, password (hashed on save via bcrypt hook),
+  phone, gender, profilePhoto, and timestamps.
+
+- backend/models/Patient.js
+  Patient schema extending baseUserFields. Contains dateOfBirth, bloodGroup,
+  allergies, medicalHistory array, consultations array, prescriptions array,
+  reports array, and bills array.
+
+- backend/models/Doctor.js
+  Doctor schema extending baseUserFields. Contains specialization, licenseNumber,
+  consultationFee, clinicAddress (street, city, state, zip), workingHours schema,
+  averageRating, totalRatings, and reviews array.
+
+- backend/models/Receptionist.js
+  Receptionist schema extending baseUserFields. Includes staffCode and associated
+  clinic metadata.
+
+- backend/models/Appointment.js
+  Core queue and booking record. Stores doctor ref, optional patient ref, date (YYYY-MM-DD),
+  tokenNumber, status ("waiting", "in_consultation", "completed", "cancelled", "no_show"),
+  source ("online", "walk_in"), type ("physical", "video"), walkInDetails (name, phone, age, gender),
+  paymentStatus, payment ref, and consultationId link.
+
+- backend/models/Assignment.js
+  Tracks Doctor <-> Receptionist workplace collaboration relationships and invitations
+  (status: "pending", "accepted", "rejected").
+
+- backend/models/DayCounter.js
+  Atomic token numbering schema. Provides an auto-incrementing sequence counter
+  per doctor per calendar date.
+
+- backend/models/Payment.js
+  Tracks appointment checkout payments. Stores patient, doctor, date, amount,
+  currency, status ("created", "paid", "refunded"), provider ("demo"), and expiration.
+
+- backend/models/Otp.js
+  Schema for email verification OTPs. Stores email, bcrypt-hashed OTP, verified boolean,
+  attempts counter (capped at 5 attempts), and MongoDB TTL index on expiresAt for auto-cleanup.
+
+--------------------------------------------------------------------------------
+BACKEND MIDDLEWARES
+--------------------------------------------------------------------------------
+- backend/middlewares/authMiddleware.js
+  Authenticates requests using JWT from either the 'token' httpOnly cookie or
+  the Authorization Bearer header. Populates req.user ({ accountId, role }).
+
+- backend/middlewares/loadAccount.js
+  Queries the appropriate database model based on req.user.role and attaches
+  the active user account document to req.account.
+
+- backend/middlewares/loadPatient.js
+  Ensures that the authenticated user has the 'patient' role and attaches
+  the Patient model document to req.patient.
+
+- backend/middlewares/queueAccess.js
+  Validates that the authenticated caller has permission to view or modify
+  a specific doctor's queue (either the doctor themself or an assigned receptionist).
+
+- backend/middlewares/resolveDoctor.js
+  Resolves a doctor by 6-digit ID or MongoDB ObjectId from params/body and
+  attaches the doctor document to req.doctor.
+
+--------------------------------------------------------------------------------
+BACKEND CONTROLLERS
+--------------------------------------------------------------------------------
+- backend/controllers/auth.js
+  Handles role-based user registration (/register/:role). Enforces 6-digit role-specific
+  ID prefix (1=patient, 2=receptionist, 3=doctor), verifies completed email OTP, auto-passes
+  phone verification, applies whitelist field filtering against mass assignment, creates
+  user with pre-save password hash, signs JWT, and sets httpOnly auth cookie.
+
+- backend/controllers/login.js
+  Authenticates user login with email/password against Patient, Doctor, or Receptionist
+  collections. Checks bcrypt password match, signs JWT, sets auth cookie, and returns
+  user profile without sensitive data.
+
+- backend/controllers/logout.js
+  Clears the httpOnly authentication cookie using matching security options (SameSite,
+  Path, Secure flag in production) and returns logout confirmation.
+
+- backend/controllers/googleauth.js
+  Handles Google OAuth sign-in. Verifies Google ID token against Google's OAuth2 client,
+  matches or provisions user account, signs session JWT, and returns authenticated payload.
+
+- backend/controllers/auththroughcookie.js
+  Endpoint for session re-hydration (/me or /auththroughcookie). Reads auth token
+  from cookie, fetches fresh user profile from DB, and returns updated user slice data
+  (including profilePhoto, role, and details).
+
+- backend/controllers/sendotp.js
+  Generates a cryptographically secure 6-digit OTP using crypto.randomInt, hashes
+  it using bcrypt, saves to Otp collection with 5-minute expiry, and dispatches email
+  via Nodemailer.
+
+- backend/controllers/verifyotp.js
+  Verifies submitted OTP against bcrypt hash stored in MongoDB. Tracks failed attempts
+  (max 5 attempts lockout) and marks email as verified with a 15-minute registration window.
+
+- backend/controllers/bookingController.js
+  Patient appointment booking workflow:
+  1) checkout: Validates doctor booking window/schedule, checks for duplicate active bookings,
+     and creates/refreshes payment session.
+  2) confirm: Validates payment status, creates appointment token atomically via queueService.
+  3) list & cancel: Lists upcoming bookings for patient and handles appointment cancellations.
+
+- backend/controllers/doctorSearchController.js
+  Public doctor discovery API. Enables search by specialization, name, or city.
+  Returns doctor cards with consultation fee, rating, clinic address, and next bookable dates.
+
+- backend/controllers/queueController.js
+  Queue desk and doctor consultation workspace API:
+  - getQueue: Fetches current day's queue, now serving, and waiting list.
+  - nextPatient: Advances queue atomically, moving current to completed and next to in_consultation.
+  - completeVisit: Finishes consultation and triggers consultation record creation.
+  - walkIn: Issues on-the-spot token for walk-in patients without requiring an online account.
+  - reschedule & cancel: Reassigns or removes appointments from the active queue.
+
+- backend/controllers/doctorController.js
+  Manages doctor self-profile: updates biography, clinic address, facilities, consultation
+  fee, and weekly working hours schedule.
+
+- backend/controllers/doctorPatientController.js
+  Enables consulting doctors to view patient history, allergies, past diagnoses, and
+  attach consultation clinical notes.
+
+- backend/controllers/patientController.js
+  Patient profile management: update personal details, fetch consultations, and upload/view
+  personal health files (prescriptions, test reports, and bills).
+
+- backend/controllers/receptionistController.js
+  Receptionist operations: view profile, query assigned doctors, accept doctor invitations,
+  and request collaboration with doctors.
+
+- backend/controllers/recordsController.js
+  Enables receptionists to upload paper prescriptions, lab reports, and clinic invoices
+  for a patient's visit. Stores files in Cloudinary authenticated storage and attaches
+  records to the patient's consultation history.
+
+- backend/controllers/assignmentController.js
+  Workflow for Doctor <-> Receptionist staff assignments: sending invitations, accepting/declining
+  invitations, and listing linked clinic staff.
+
+- backend/controllers/imageupload.js
+  Profile picture upload endpoint. Enforces 5 MB limit, allowed MIME types (JPEG, PNG, WebP),
+  magic-byte header signature validation (failing closed on errors), uploads to Cloudinary,
+  and updates user's profilePhoto strictly scoped to req.user.accountId.
+
+- backend/controllers/saveuser.js
+  Auxiliary helper controller for updating specific user fields.
+
+--------------------------------------------------------------------------------
+BACKEND SERVICES, SOCKET & UTILS
+--------------------------------------------------------------------------------
+- backend/services/queueService.js
+  Encapsulates core business logic for queue management: atomic token allocation
+  (using DayCounter), state transitions (waiting -> in_consultation -> completed),
+  cancelling tokens, and triggering real-time WebSocket broadcast updates.
+
+- backend/services/recordsService.js
+  Handles consultation record creation: claims an appointment, ensures a single
+  consultation ID entry exists, and links previous consultations across reschedules.
+
+- backend/socket/index.js
+  Initializes Socket.IO instance on top of HTTP server, sets CORS rules, authenticates
+  connections via cookie/token, and routes clients into authorized doctor/queue rooms.
+
+- backend/socket/identity.js
+  Resolves socket connection identity (patient, doctor, or receptionist) and validates
+  room subscription authorization.
+
+- backend/socket/access.js
+  Validates whether a socket client has rights to join doctor-specific queue rooms.
+
+- backend/socket/emitter.js
+  Broadcasts real-time events over Socket.IO (QUEUE_UPDATED, NOW_SERVING_CHANGED) to
+  all connected clients in doctor, receptionist, and patient room channels.
+
+- backend/utils/dates.js
+  Timezone-aware date utilities for Indian Standard Time (IST). Formats YYYY-MM-DD,
+  computes working hour windows, and checks if clinic is open on a given day.
+
+- backend/utils/jwt.js
+  Signs JWT tokens with accountId and role. Handles setting secure httpOnly cookies
+  and clearing cookies during logout with matching flags (production secure mode).
+
+- backend/utils/sendMail.js
+  Nodemailer transporter wrapper for sending transactional emails and OTPs.
+
+- backend/utils/signedUrl.js
+  Generates Cloudinary authenticated signed URLs for sensitive medical documents
+  (prescriptions, reports, bills) with a 1-hour expiration timestamp.
+
+- backend/routes/route.js
+  Central Express router file. Registers all REST API endpoints under /api/v1 for
+  auth, profile, search, booking, queue desk, medical records, and socket management.
+
+================================================================================
+FRONTEND ROOT & CONFIGURATION
+--------------------------------------------------------------------------------
+- frontend/index.html
+  HTML5 single-page application entry point. Loads Google Fonts and mounts root div.
+
+- frontend/vite.config.js
+  Vite configuration file utilizing @vitejs/plugin-react and @tailwindcss/vite.
+
+- frontend/eslint.config.js
+  ESLint 9 flat configuration for React, React Hooks, and JSX standards.
+
+- frontend/vercel.json
+  Vercel deployment SPA rewrite configuration: routes all paths to /index.html.
+
+- frontend/public/_redirects
+  Netlify/Cloudflare Pages SPA rewrite configuration: routes /* to /index.html 200.
+
+- frontend/src/main.jsx
+  Client entry point. Renders React root inside Redux Provider and BrowserRouter.
+
+- frontend/src/App.jsx
+  Top-level router declaration. Defines public routes, protected role-based routes
+  (Patient, Doctor, Receptionist), global navbar, and AuthInitialize wrapper.
+
+- frontend/src/socket.js
+  Socket.IO client instance singleton configured with auto-reconnect and credential sharing.
+
+- frontend/src/config/index.js
+  Frontend configuration: resolves API baseUrl and backend server endpoint.
+
+- frontend/src/index.css & frontend/src/App.css
+  Global Tailwind styles, typography, custom scrollbars, and color variables.
+
+--------------------------------------------------------------------------------
+FRONTEND REDUX STATE STORE
+--------------------------------------------------------------------------------
+- frontend/src/redux/store.js
+  Configures Redux Toolkit store combining authSlice, doctorSlice, patientSlice,
+  receptionistSlice, and queueSlice.
+
+- frontend/src/redux/authSlice.js
+  Manages authentication state: token, role, user profile (id, name, email, profilePhoto),
+  loading indicators, and login/logout action reducers.
+
+- frontend/src/redux/patientSlice.js
+  Stores patient profile data, consultation history, uploaded documents, and medical bills.
+
+- frontend/src/redux/doctorSlice.js
+  Stores doctor profile details, clinic addresses, working hours, and fees.
+
+- frontend/src/redux/receptionistSlice.js
+  Stores receptionist details, assigned doctors, and pending staff requests.
+
+- frontend/src/redux/queueSlice.js
+  Stores live queue state: active appointments, currently serving token, and people ahead.
+
+--------------------------------------------------------------------------------
+FRONTEND PAGES
+--------------------------------------------------------------------------------
+- frontend/src/pages/FirstPage.jsx
+  Public landing page featuring hero section, features list, trust bar, testimonials,
+  FAQ accordion, and platform statistics.
+
+- frontend/src/pages/LoginPage.jsx
+  Unified login page with role switcher (Patient, Doctor, Receptionist), email/password
+  form, Google Sign-In button, and error alerts.
+
+- frontend/src/pages/RegisterPage.jsx
+  Interactive multi-step registration workflow guiding users through role selection,
+  account details, personal information, email OTP verification, and profile completion.
+
+- frontend/src/pages/SearchDoctors.jsx
+  Doctor search and booking interface. Filters doctors by specialty, location, or name,
+  and opens modal to book physical consultation tokens.
+
+- frontend/src/pages/PatientProfile.jsx
+  Patient dashboard containing tabs for personal profile, consultation history,
+  uploaded medical documents, and clinic bills.
+
+- frontend/src/pages/DoctorProfile.jsx
+  Doctor self-management portal for editing bio, clinic address, fees, weekly working
+  schedule, and viewing receptionist staff.
+
+- frontend/src/pages/DoctorPhysical.jsx
+  Doctor consultation desk interface for in-person visits: displays live queue, currently
+  consulting patient, next patient button, and quick access to patient medical history.
+
+- frontend/src/pages/DoctorVideo.jsx
+  Doctor virtual queue workspace for online/video appointments.
+
+- frontend/src/pages/ReceptionistDashboard.jsx
+  Main receptionist work desk: doctor selector, walk-in token generation form,
+  live queue list, call patient, complete visit, and reschedule dialogs.
+
+- frontend/src/pages/ReceptionistProfile.jsx
+  Receptionist profile management, doctor collaboration requests, and clinic status.
+
+- frontend/src/pages/AssignmentResponse.jsx
+  Doctor page for accepting or declining staff link requests sent by receptionists.
+
+- frontend/src/pages/TrustAndLegalPage.jsx
+  Renders platform terms of service, privacy policy, and medical disclaimers.
+
+- frontend/src/pages/SocketTest.jsx
+  Development diagnostics utility for testing WebSocket connection and room events.
+
+--------------------------------------------------------------------------------
+FRONTEND HOOKS (CUSTOM REACT HOOKS)
+--------------------------------------------------------------------------------
+- frontend/src/hooks/useQueue.js
+  Subscribes to live WebSocket queue events for a doctor and updates queue state in real time.
+
+- frontend/src/hooks/useQueueDesk.js
+  Manages receptionist desk operations: calling next patient, marking no-show, completing visit.
+
+- frontend/src/hooks/useDeskDoctors.js
+  Fetches the list of doctors assigned to the currently logged-in receptionist.
+
+- frontend/src/hooks/useDoctorBooking.js
+  Handles patient booking flow: initiating checkout session and confirming demo payment.
+
+- frontend/src/hooks/useDoctorSearch.js
+  Queries doctor search API with debounce and filter parameters.
+
+- frontend/src/hooks/useDoctorProfile.js & useDoctorSelf.js
+  Fetches and updates doctor profile information, working hours, and clinic settings.
+
+- frontend/src/hooks/useDoctorStaff.js
+  Handles doctor staff invitations and receptionist management.
+
+- frontend/src/hooks/useMyBookings.js
+  Fetches active and upcoming appointments for the authenticated patient.
+
+- frontend/src/hooks/usePatientProfile.js & usePatientInfo.js
+  Manages fetching and updating patient medical records, history, and uploaded files.
+
+- frontend/src/hooks/useReceptionistProfile.js
+  Manages receptionist data and linking requests.
+
+- frontend/src/hooks/useUpcoming.js
+  Fetches doctor's schedule and availability for upcoming calendar days.
+
+- frontend/src/hooks/useVisitRecords.js
+  Fetches and uploads visit-associated records (prescriptions, lab tests, bills).
+
+--------------------------------------------------------------------------------
+FRONTEND COMPONENTS & FEATURE MODULES
+--------------------------------------------------------------------------------
+- frontend/src/components/AuthInitialize.jsx
+  Runs on app start: calls /me endpoint to re-hydrate Redux auth state from httpOnly cookie.
+
+- frontend/src/components/ProtectedRoutes.jsx
+  Route guard that verifies user authentication and matches allowed user roles.
+
+- frontend/src/components/PublicRoutes.jsx
+  Route wrapper for public-only pages (redirects logged-in users to their dashboard).
+
+- frontend/src/components/FirstPage_Navbar.jsx & FirstPage_Footer.jsx
+  Top navigation bar with logo, profile avatar dropdown, login/register buttons, and footer.
+
+- frontend/src/components/FirstPage/
+  Landing page components: FirstPage_Hero.jsx, FirstPage_Features.jsx, FirstPage_About.jsx,
+  FirstPage_HowItWorks.jsx, FirstPage_Testimonials.jsx, FirstPage_TrustBar.jsx, FirstPage_FAQ.jsx.
+
+- frontend/src/features/ (Registration Stepper)
+  - RegisterPage_Stepper.jsx: Progress indicator for the 6 registration steps.
+  - RegisterPage_RoleStep.jsx: Role selection (Patient, Doctor, Receptionist).
+  - RegisterPage_AccountStep.jsx: Email and password input with strength validation.
+  - RegisterPage_PersonalStep.jsx: Name, gender, and phone number inputs.
+  - RegisterPage_EmailStep.jsx: Email OTP dispatch and verification step.
+  - RegisterPage_PhoneVerifyStep.jsx: Phone number placeholder step (auto-passes).
+  - RegisterPage_DetailsStep.jsx: Role-specific details (specialization, license, DOB).
+
+- frontend/src/components/doctorWorkspace/
+  - DoctorNavbar.jsx: Workspace header with clinic status indicators.
+  - DoctorQueue.jsx: List of patients waiting in queue with token numbers.
+  - PatientPanel.jsx: Active patient details, allergies, notes, and medical records viewer.
+  - WorkspaceTabs.jsx: Switches between physical and video consultation workspaces.
+
+- frontend/src/components/queueDesk/
+  - DoctorPicker.jsx: Dropdown for receptionist to switch active doctor queue.
+  - NowServingCard.jsx: Highlight card showing the token currently inside doctor's cabin.
+  - QueueRow.jsx: Individual table row for a waiting patient with action buttons.
+  - RescheduleDialog.jsx: Modal to move a patient appointment to a different time/date.
+  - UpcomingDays.jsx: Calendar view showing appointment load for upcoming dates.
+  - WalkInForm.jsx: Rapid registration form to issue walk-in tokens on the spot.
+
+- frontend/src/components/patientProfile/
+  - PersonalInfoTab.jsx: View/edit personal profile, blood group, allergies, address.
+  - ConsultationsTab.jsx: Chronological list of completed doctor visits with doctor notes.
+  - DocumentsTab.jsx: Gallery of prescriptions and laboratory test reports.
+  - BillsTab.jsx: Clinic invoices with payment status and download links.
+  - UploadForm.jsx: File upload form with type selection and title inputs.
+
+- frontend/src/components/doctorProfile/
+  - ProfileHeader.jsx & ProfileNavbar.jsx: Profile banner, avatar upload, navigation tabs.
+  - AboutSection.jsx: Doctor qualifications, bio, and experience.
+  - ContactSection.jsx & DirectionsSection.jsx: Clinic location and map coordinates.
+  - WorkingHoursSection.jsx: Weekly clinic schedule editor.
+  - FeesSection.jsx & FacilitiesSection.jsx: Pricing and clinic amenities.
+  - StaffSection.jsx: Associated receptionists and invite form.
+
+- frontend/src/components/records/
+  - RecordsDialog.jsx: Modal dialog allowing receptionists to view and upload documents.
+
+- frontend/src/components/search/
+  - SearchBar.jsx: Doctor search input with filter dropdowns.
+  - DoctorCard.jsx: Doctor summary card showing specialty, fee, rating, and book button.
+  - DoctorModal.jsx: Detailed doctor booking modal with date picker and fee checkout.
+  - MyQueuePanel.jsx: Quick sidebar widget showing patient's active queue position.
+
+- frontend/src/components/shared/
+  - ConfirmDialog.jsx: Reusable modal for confirming destructive or critical actions.
+  - PhotoLightbox.jsx: Full-screen image preview lightbox for documents and photos.
+  - ProfileHeader.jsx: Common profile banner with avatar and badge.
+  - ui.jsx & helpers.js: Common buttons, badges, spinners, and formatting helpers.
+
+- frontend/src/utils/
+  - dates.js: Frontend date formatting, relative time calculation, and IST helpers.
+  - utils.js: CSS class concatenation and input styling utilities.
+
+================================================================================
+4. KEY ARCHITECTURAL WORKFLOWS
+================================================================================
+
+A. AUTHENTICATION & SESSION PERSISTENCE
+   1. User logs in at /login or registers at /register/:role.
+   2. Backend verifies credentials/OTP, generates JWT ({ accountId, role }),
+      and writes an httpOnly cookie with secure attributes.
+   3. On app load, AuthInitialize component fires GET /api/v1/auththroughcookie (/me).
+   4. Backend reads the cookie, verifies token, retrieves fresh user document,
+      and populates Redux authSlice with user state.
+
+B. DOCTOR DISCOVERY & APPOINTMENT BOOKING
+   1. Patient visits /search, searches doctors by specialty or location.
+   2. Selects a date; frontend calls POST /api/v1/patient/bookings/checkout.
+   3. Backend checks booking window, doctor hours, and opens a Payment record.
+   4. Frontend confirms checkout; backend creates Appointment record atomically
+      with a sequential tokenNumber using DayCounter and queueService.
+   5. Real-time event is broadcasted to the doctor's queue room.
+
+C. REAL-TIME QUEUE MANAGEMENT
+   1. Doctor opens /dashboard/doctor/physical; receptionist opens /dashboard/receptionist.
+   2. Both clients connect via Socket.IO and join the room `doctor:<doctorId>:<date>`.
+   3. Receptionist generates walk-in token -> queueService saves and emits QUEUE_UPDATED.
+   4. Doctor clicks "Next Patient" -> appointment status moves from "waiting" to
+      "in_consultation". Socket event notifies all waiting patients and receptionist.
+   5. Doctor clicks "Complete" -> consultation history is created in Patient document;
+      next patient is called.
+
+D. HEALTH RECORDS & ATTESTED CLOUD STORAGE
+   1. Receptionist or patient uploads prescription/report/bill via multipart form.
+   2. File is validated (magic bytes + MIME type) and uploaded to Cloudinary
+      under authenticated private folder.
+   3. Document metadata is pushed into the patient's sub-document array.
+   4. When accessed, backend generates a signed Cloudinary URL with a 1-hour
+      time-to-live (TTL), ensuring protected health documents are never exposed
+      via permanent public links.
+
+================================================================================
+END OF CODEBASE SUMMARY
+================================================================================
+

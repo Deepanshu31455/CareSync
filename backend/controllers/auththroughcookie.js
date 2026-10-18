@@ -6,7 +6,7 @@ const Patient=require('../models/Patient')
 const getMe = async (req, res) => {
   try {
     // Get token from cookie
-    const token = req.cookies.token;
+    const token = req.cookies?.token;
 
     if (!token) {
       return res.status(401).json({
@@ -17,19 +17,15 @@ const getMe = async (req, res) => {
 
     // Verify JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const role=decoded.role;
-    let m=null;
-    // decoded.accountId
-    if(role=="patient")
-      m=Patient
-    else if(role=="doctor")
-      m=Doctor
-    else if(role=="receptionist")
-      m=Receptionist
+    const role = decoded.role;
+    let m = null;
 
-    if(!m)
-    {
-        return res.status(404).json({
+    if (role === "patient") m = Patient;
+    else if (role === "doctor") m = Doctor;
+    else if (role === "receptionist") m = Receptionist;
+
+    if (!m) {
+      return res.status(400).json({
         success: false,
         message: "Invalid Role",
       });
@@ -41,12 +37,13 @@ const getMe = async (req, res) => {
         message: "User not found",
       });
     }
-    const dataforslice={
-       id:user.id,
-       name:user.fullName,
-       email:user.email,
-       role:user.role,
-    }
+    const dataforslice = {
+      id: user.id,
+      name: user.fullName,
+      email: user.email,
+      role: user.role,
+      profilePhoto: user.profilePhoto || "",
+    };
     // Return logged-in user
 
     return res.status(200).json({

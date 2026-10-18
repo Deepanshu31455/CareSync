@@ -19,9 +19,8 @@ import PhoneVerifyStep from "../features/RegisterPage_PhoneVerifyStep";
 import { API_BASE } from "../config";
 
 export default function RegisterPage() {
-  const user = useSelector((state) => state.authStore.user);//remove after checking error
-  const dispatch=useDispatch();
-  const navigate=useNavigate();
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [stepKey, setStepKey] = useState("email");
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -63,7 +62,7 @@ export default function RegisterPage() {
     // Drop fields that don't belong in the database: confirmPassword only
     // ever existed to check against `password` on the client, and idSuffix
     // gets folded into the single `id` string the backend actually stores.
-    const { confirmPassword, idSuffix, ...rest } = data;
+    const { confirmPassword: _ignored, idSuffix, ...rest } = data;
     const fullId = `${selectedRole.digit}${idSuffix}`;
 
     try {
@@ -74,25 +73,23 @@ export default function RegisterPage() {
         body: JSON.stringify({ ...rest, id: fullId }),
       });
 
-      const dataforslice={
-          id: fullId,
-          name: data.fullName,
-          email: data.email,
-          role: data.role 
-      }
-
       const result = await res.json();
 
       if (!res.ok) {
         setSubmitError(result.message || "Registration failed — please try again");
         return;
       }
-      dispatch(setUser(dataforslice));
-      console.log("after dispatch from register page",dataforslice)
-      navigate(role === "patient" ? "/" : `/dashboard/${role}`, { replace: true });
 
-      // Account created and the server already logged them in via cookie —
-      // go straight to their dashboard instead of back to login.
+      const dataforslice = {
+        id: fullId,
+        name: data.fullName,
+        email: data.email,
+        role: data.role,
+        profilePhoto: result.account?.profilePhoto || data.profilePhoto || "",
+      };
+
+      dispatch(setUser(dataforslice));
+      navigate(role === "patient" ? "/" : `/dashboard/${role}`, { replace: true });
     } catch (err) {
       console.error("Registration error:", err);
       setSubmitError("Cannot connect to server");
