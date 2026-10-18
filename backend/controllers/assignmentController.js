@@ -176,6 +176,7 @@ exports.sendRequest = async (req, res) => {
       await sendMail({
         to: doctor.email,
         subject: `${req.account.fullName} wants to manage your appointments on CareSync`,
+        text: `Hello Dr. ${doctor.fullName},\n\n${req.account.fullName} (${req.account.email}) has asked to work as your receptionist on CareSync.\n\nThey get no access until you accept.\nReview this request: ${link}\n\nThe link works once and expires in ${REQUEST_VALID_DAYS} days. If you do not know this person, ignore this email.`,
         html: `
           <p>Hello Dr. ${escapeHtml(doctor.fullName)},</p>
           <p><b>${escapeHtml(req.account.fullName)}</b> (${escapeHtml(req.account.email)}) has asked to work as your receptionist on CareSync.</p>
@@ -185,8 +186,8 @@ exports.sendRequest = async (req, res) => {
       });
     } catch (err) {
       await Assignment.deleteOne({ _id: assignment._id });
-      console.log("Request email failed:", err.message);
-      return fail(res, 502, "Could not send the email to the doctor. Please try again.");
+      console.error("Request email failed:", err);
+      return fail(res, 502, `Could not send email to doctor: ${err.message || "Failed to deliver email"}`);
     }
 
     return res.status(201).json({

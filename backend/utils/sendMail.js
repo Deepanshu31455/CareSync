@@ -12,9 +12,31 @@ async function sendMail({ to, subject, text, html }) {
 
   // 1. Brevo HTTP REST API (Port 443 HTTPS — NEVER blocked on Render Free Tier!)
   if (brevoApiKey && senderEmail) {
-    const recipients = (Array.isArray(to) ? to : [to]).map((email) => ({
-      email: typeof email === "string" ? email.trim() : email.email,
-    }));
+    const recipients = (Array.isArray(to) ? to : [to])
+      .map((email) => {
+        const emailStr = typeof email === "string" ? email : email?.email;
+        return { email: String(emailStr || "").trim() };
+      })
+      .filter((r) => r.email);
+
+    if (recipients.length === 0) {
+      throw new Error("No valid recipient email address provided.");
+    }
+
+    const payload = {
+      sender: { name: "CareSync", email: senderEmail },
+      to: recipients,
+      subject,
+    };
+
+    if (html && html.trim()) {
+      payload.htmlContent = html;
+    }
+    if (text && text.trim()) {
+      payload.textContent = text;
+    } else if (!payload.htmlContent) {
+      payload.textContent = subject || "CareSync Notification";
+    }
 
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
@@ -23,13 +45,7 @@ async function sendMail({ to, subject, text, html }) {
         "Content-Type": "application/json",
         "Accept": "application/json",
       },
-      body: JSON.stringify({
-        sender: { name: "CareSync", email: senderEmail },
-        to: recipients,
-        subject,
-        textContent: text || "",
-        htmlContent: html || (text ? `<p>${text}</p>` : ""),
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json().catch(() => ({}));
