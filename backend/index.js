@@ -13,10 +13,20 @@ const PORT = process.env.PORT || 4000;
 
 // Where the React app runs. Used for CORS here, for the Socket.IO connection,
 // and for the links inside emails. Set CLIENT_URL in .env when you deploy.
-const CLIENT_URL = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/+$/, "");
+const clientEnvUrl = (process.env.CLIENT_URL || "").replace(/\/+$/, "");
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://caresync-ph5d.onrender.com",
+  clientEnvUrl,
+].filter(Boolean);
 
 app.use(cors({
-  origin: CLIENT_URL,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin) || (clientEnvUrl && origin === clientEnvUrl)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS policy does not allow access from origin ${origin}`));
+  },
   credentials: true,
 }));
 
@@ -46,7 +56,7 @@ app.use("/api/v1",Route);
 // in http.createServer and that server (not app) is the one that listens.
 const server = http.createServer(app);
 const { initSocket } = require("./socket");
-initSocket(server, app, CLIENT_URL); // also makes the io object available as req.app.get("io")
+initSocket(server, app, allowedOrigins); // also makes the io object available as req.app.get("io")
 
 // Await the DB connection before accepting any traffic.
 // This prevents buffering timeouts on early requests during startup.
