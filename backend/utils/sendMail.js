@@ -4,7 +4,11 @@ const nodemailer = require("nodemailer");
 // EMAIL_PASS must be a Gmail "app password" (16 characters), not the normal password.
 // Uses Gmail by default; set EMAIL_SERVICE in .env if you use another provider.
 async function sendMail({ to, subject, text, html }) {
-  const resendApiKey = (process.env.RESEND_API_KEY || "").trim();
+  const resendApiKey = (process.env.RESEND_API_KEY || "")
+    .trim()
+    .replace(/^["']|["']$/g, "") // strip accidental surrounding quotes
+    .replace(/^Bearer\s+/i, "")  // strip accidental "Bearer " prefix
+    .trim();
 
   // 1. Resend HTTPS API (Port 443 — works seamlessly on Render Free Tier where SMTP is blocked)
   if (resendApiKey) {

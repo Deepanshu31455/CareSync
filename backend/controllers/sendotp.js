@@ -23,6 +23,8 @@ const sendotp = async (req, res) => {
     await Otp.deleteMany({ email });
     await Otp.create({ email, otp: otpHash, expiresAt, verified: false, attempts: 0 });
 
+    console.log(`[CareSync OTP] Verification code for ${email}: ${otp}`);
+
     // Send email via Resend HTTPS API (Port 443 — never blocked on Render)
     // or fallback to Nodemailer SMTP (localhost)
     await sendMail({
