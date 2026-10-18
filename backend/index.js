@@ -9,7 +9,7 @@ const os = require("os");
 const app=express();
 const fileUpload=require("express-fileupload")
 require("dotenv").config();
-const PORT=process.env.PORT ||4000;
+const PORT = process.env.PORT || 4000;
 
 // Where the React app runs. Used for CORS here, for the Socket.IO connection,
 // and for the links inside emails. Set CLIENT_URL in .env when you deploy.
@@ -52,9 +52,9 @@ initSocket(server, app, CLIENT_URL); // also makes the io object available as re
 // This prevents buffering timeouts on early requests during startup.
 async function startServer() {
   await connectwithdb();
-  server.listen(PORT, () => {
-    console.log(`Server started at port ${PORT}`);
-  });
+      server.listen(PORT, "0.0.0.0", () => {
+      console.log(`Server started at port ${PORT}`);
+      });
 }
 
 startServer().catch((err) => {
