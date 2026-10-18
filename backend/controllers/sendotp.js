@@ -1,7 +1,7 @@
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
 const bcrypt = require("bcryptjs");
 const Otp = require("../models/Otp");
+const { sendMail } = require("../utils/sendMail");
 
 const sendotp = async (req, res) => {
   try {
@@ -23,34 +23,22 @@ const sendotp = async (req, res) => {
     await Otp.deleteMany({ email });
     await Otp.create({ email, otp: otpHash, expiresAt, verified: false, attempts: 0 });
 
-    const emailUser = String(process.env.EMAIL_USER || "").trim();
-    const emailPass = String(process.env.EMAIL_PASS || "").replace(/\s+/g, "");
-
-    if (!emailUser || !emailPass) {
-      console.error("sendotp error: EMAIL_USER or EMAIL_PASS is missing in environment variables.");
-      return res.status(500).json({
-        message: "Email service not configured. Please set EMAIL_USER and EMAIL_PASS in Render Environment Variables.",
-      });
-    }
-
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: emailUser,
-        pass: emailPass,
-      },
-      connectionTimeout: 10000, // 10 seconds timeout
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
-    });
-
-    await transporter.sendMail({
-      from: `"CareSync" <${emailUser}>`,
+    // Send email via Resend HTTPS API (Port 443 — never blocked on Render)
+    // or fallback to Nodemailer SMTP (localhost)
+    await sendMail({
       to: email,
       subject: "CareSync Verification OTP",
       text: `Your CareSync verification OTP is ${otp}. It is valid for 5 minutes.`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; line-height: 1.5; color: #1e293b;">
+          <h2 style="color: #0f766e;">CareSync Verification</h2>
+          <p>Your one-time verification code is:</p>
+          <div style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #0d9488; margin: 16px 0;">
+            ${otp}
+          </div>
+          <p style="font-size: 13px; color: #64748b;">This code is valid for 5 minutes. If you did not request this, please ignore this email.</p>
+        </div>
+      `,
     });
 
     return res.status(200).json({ message: "OTP sent successfully" });
