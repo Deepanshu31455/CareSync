@@ -6,8 +6,9 @@ const mongoose=require('mongoose');
 const os = require("os");
 
 
-const app=express();
-const fileUpload=require("express-fileupload")
+const app = express();
+app.set("trust proxy", 1); // Trust Render reverse proxy for secure cookies over HTTPS
+const fileUpload = require("express-fileupload");
 require("dotenv").config();
 const PORT = process.env.PORT || 4000;
 
