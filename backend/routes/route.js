@@ -51,6 +51,9 @@ const { searchDoctors: searchDoctorsForPatients, getDoctor: getDoctorForPatients
 const { checkout, confirm: confirmBooking, myBookings, cancelBooking } = require("../controllers/bookingController");
 const { getPatientInfo } = require("../controllers/doctorPatientController");
 const { listRecords, addRecord, deleteRecord } = require("../controllers/recordsController");
+const video = require("../controllers/videoBookingController");        // patient: book and check in
+const videoDoctor = require("../controllers/videoDoctorController");   // doctor: the only one who controls video
+const { getCall } = require("../controllers/videoCallController");     // the call screen: the visit's own doctor or patient
 const {
   getQueue,
   getNowServing,
@@ -63,7 +66,7 @@ const {
 } = require("../controllers/queueController");
 
 // ─── Auth / general ──────────────────────────────────────────────────────────
-router.get( "/me",              getMe);
+router.get( "/me",              (req, res, next) => { console.log("HIT /me"); next(); }, getMe);
 router.post("/send-otp",        sendotp);
 router.post("/verify-otp",      verifyotp);
 router.post("/register/:role",  auth);
@@ -71,7 +74,7 @@ router.post("/login",           login);
 router.post("/logout",          logout);
 router.post("/googleregister",  verifyGoogleForRegistration);
 router.post("/googlelogin",     loginWithGoogle);
-router.put( "/imageUpload",     authMiddleware, imageUpload);
+router.put( "/imageUpload",     imageUpload);
 
 // ─── Doctor profile ──────────────────────────────────────────────────────────
 router.get("/doctor/profile",  authMiddleware, getDoctorProfile);
@@ -149,6 +152,26 @@ router.put("/queue/:doctorId/appointments/:id/fee",           queueDesk, setFee)
 router.get(   "/queue/:doctorId/appointments/:id/records",               queueDesk, listRecords);
 router.post(  "/queue/:doctorId/appointments/:id/records/:kind",         queueDesk, addRecord);
 router.delete("/queue/:doctorId/appointments/:id/records/:kind/:itemId", queueDesk, deleteRecord);
+
+// ─── Video visits ────────────────────────────────────────────────────────────
+// Patient: book, see the time the doctor gave, mark "I am available"
+router.post("/patient/video/checkout",                patientOnly, video.checkout);
+router.post("/patient/video/:paymentId/confirm",      patientOnly, video.confirm);
+router.get( "/patient/video-visits",                  patientOnly, video.myVisits);
+router.post("/patient/video-visits/:id/available",    patientOnly, video.setAvailable);
+router.post("/patient/video-visits/:id/cancel",       patientOnly, video.cancel);
+
+// Doctor ONLY (no receptionist route exists for video): the doctor's own video queue and times
+router.get( "/doctor/video/queue",                    doctorOnly, videoDoctor.getQueue);
+router.get( "/doctor/video/upcoming",                 doctorOnly, videoDoctor.getUpcoming);
+router.get( "/doctor/video/visits/:id/patient",       doctorOnly, videoDoctor.getPatientInfo);
+router.put( "/doctor/video/visits/:id/time",          doctorOnly, videoDoctor.setTime);
+router.post("/doctor/video/schedule",                 doctorOnly, videoDoctor.scheduleAll);
+router.put( "/doctor/video/visits/:id/status",        doctorOnly, videoDoctor.changeStatus);
+router.put( "/doctor/video/visits/:id/notes",         doctorOnly, videoDoctor.saveNotes);
+
+// The call screen asks who it is talking to (checked against the visit: only its own doctor or patient)
+router.get( "/video-calls/:visitId",                  authMiddleware, getCall);
 
 // ─── Live connection test (development only; remove when the queue is built) ──
 // Sends a test message to every open browser tab of the logged-in user.

@@ -55,7 +55,7 @@ exports.searchDoctors = async (req, res) => {
     const date = req.query.date || today;
 
     if (!isValidDate(date) || date < today || date > addDays(today, BOOKING_WINDOW_DAYS)) {
-      return fail(res, 400, `Choose a day from today up to ${BOOKING_WINDOW_DAYS} days ahead.`);
+      return fail(res, 400, "Choose a day from today up to two weeks ahead.");
     }
 
     const filter = { emailVerified: true };
@@ -121,7 +121,7 @@ exports.getDoctor = async (req, res) => {
     const days = [];
     for (let i = 0; i <= BOOKING_WINDOW_DAYS; i++) {
       const date = addDays(today, i);
-      days.push({ date, weekday: weekdayOf(date), open: isDoctorBookableOn(doctor, date) });
+      days.push({ date, weekday: weekdayOf(date), open: isDoctorBookableOn(doctor, date), videoOpen: isDoctorOpenOn(doctor, date, { strict: true }) });
     }
 
     const { nowServing, waiting } = await summary(doctor._id, today);

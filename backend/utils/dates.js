@@ -75,7 +75,21 @@ function isDoctorBookableOn(doctor, date, now = Date.now()) {
   return closing === null || nowMinutesIST(now) < closing;
 }
 
+// "17:30" is a clock time the doctor can type: 24-hour, two digits each
+const isValidClock = (text) => typeof text === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(text);
+
+// The moment of a clock time on a date in India: ("2026-10-18", "17:30") -> Date
+function istMoment(date, clock) {
+  return new Date(`${date}T${clock}:00+05:30`);
+}
+
+// "17:30" for a moment, in Indian time
+function clockOf(moment) {
+  return new Date(new Date(moment).getTime() + IST_OFFSET_MS).toISOString().slice(11, 16);
+}
+
 module.exports = {
+  isValidClock, istMoment, clockOf,
   todayIST, isValidDate, weekdayOf, addDays, endOfDatePlusDays, isDoctorOpenOn,
   minutesOfClock, closingMinutes, nowMinutesIST, isDoctorBookableOn,
 };

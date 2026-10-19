@@ -23,9 +23,13 @@ export default function DoctorModal({ doctorId, firstDate, onClose, onBooked }) 
   const { doctor, days, today, loading, working, error, setError, reload, startPayment, pay } = useDoctorBooking(doctorId);
 
   const [step, setStep] = useState("choose"); // "choose" | "pay" | "done"
+  const [type, setType] = useState("physical"); // "physical" (visit the clinic) | "video"
   const [date, setDate] = useState(firstDate);
   const [checkout, setCheckout] = useState(null); // { mode, payment }
   const [booking, setBooking] = useState(null);
+
+  // A clinic visit needs the doctor's hours to be still running today; a video visit needs only a working day
+  const isOpen = (d) => (type === "video" ? Boolean(d.videoOpen) : d.open);
 
   // Esc closes the window (not while a payment is running)
   useEffect(() => {
@@ -36,14 +40,15 @@ export default function DoctorModal({ doctorId, firstDate, onClose, onBooked }) 
 
   // If the day chosen in the search is not bookable, start with the first day that is
   useEffect(() => {
-    if (days.length > 0 && !days.some((d) => d.date === date && d.open)) {
-      const first = days.find((d) => d.open);
+    if (days.length > 0 && !days.some((d) => d.date === date && isOpen(d))) {
+      const first = days.find((d) => isOpen(d));
       if (first) setDate(first.date);
     }
-  }, [days, date]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days, date, type]);
 
   async function goToPayment() {
-    const result = await startPayment(date);
+    const result = await startPayment(date, type);
     if (result) {
       setCheckout(result);
       setStep("pay");
@@ -51,11 +56,11 @@ export default function DoctorModal({ doctorId, firstDate, onClose, onBooked }) 
   }
 
   async function payNow() {
-    const result = await pay(checkout.payment.id);
+    const result = await pay(checkout.payment.id, type);
     if (result) {
       setBooking(result);
       setStep("done");
-      onBooked();
+      onBooked(type);
     }
   }
 
@@ -130,7 +135,7 @@ export default function DoctorModal({ doctorId, firstDate, onClose, onBooked }) 
                   </div>
                 )}
 
-                {today && date === today.date && (
+                {type === "physical" && today && date === today.date && (
                   <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">
                     Today: {today.nowServing ? `now serving ${today.nowServing}` : "not started yet"} · {today.waiting} waiting
                   </p>
@@ -143,12 +148,12 @@ export default function DoctorModal({ doctorId, firstDate, onClose, onBooked }) 
                     <button
                       key={d.date}
                       onClick={() => setDate(d.date)}
-                      disabled={!d.open}
+                      disabled={!isOpen(d)}
                       aria-pressed={date === d.date}
                       className={`rounded-xl border px-3 py-2 text-sm ${
                         date === d.date
                           ? "border-blue-600 bg-blue-50 font-semibold text-blue-700"
-                          : d.open
+                          : isOpen(d)
                           ? "border-slate-200 hover:bg-slate-50"
                           : "cursor-not-allowed border-slate-100 text-slate-300"
                       }`}
@@ -157,23 +162,35 @@ export default function DoctorModal({ doctorId, firstDate, onClose, onBooked }) 
                     </button>
                   ))}
                 </div>
-                {!days.some((d) => d.open) && (
+                {!days.some((d) => isOpen(d)) && (
                   <p className="mt-2 text-sm text-slate-500">This doctor has no consulting days in the next 7 days.</p>
                 )}
 
                 {/* The kind of consultation */}
                 <h3 className="mt-6 text-xs font-semibold uppercase tracking-wide text-slate-500">Consultation</h3>
                 <div className="mt-2 grid grid-cols-2 gap-2">
-                  <div className="rounded-xl border border-blue-600 bg-blue-50 p-3 text-sm font-semibold text-blue-700">
+                  <button
+                    onClick={() => setType("physical")}
+                    aria-pressed={type === "physical"}
+                    className={`rounded-xl border p-3 text-left text-sm font-semibold ${
+                      type === "physical" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
                     Visit the clinic
-                    <p className="text-xs font-normal text-blue-600">Physical consultation</p>
-                  </div>
-                  <div className="rounded-xl border border-slate-100 p-3 text-sm text-slate-400">
-                    <span className="flex items-center gap-1.5 font-semibold">
+                    <p className="text-xs font-normal opacity-80">Physical consultation</p>
+                  </button>
+                  <button
+                    onClick={() => setType("video")}
+                    aria-pressed={type === "video"}
+                    className={`rounded-xl border p-3 text-left text-sm font-semibold ${
+                      type === "video" ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5">
                       <Video size={14} /> Video
                     </span>
-                    <p className="text-xs">Coming soon</p>
-                  </div>
+                    <p className="text-xs font-normal opacity-80">The doctor will give you a time</p>
+                  </button>
                 </div>
 
                 <div className="mt-6">
@@ -186,7 +203,7 @@ export default function DoctorModal({ doctorId, firstDate, onClose, onBooked }) 
                   </p>
                   <button
                     onClick={goToPayment}
-                    disabled={working || !days.some((d) => d.date === date && d.open)}
+                    disabled={working || !days.some((d) => d.date === date && isOpen(d))}
                     className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                   >
                     {working ? "Please wait..." : "Continue to payment"}
@@ -201,7 +218,7 @@ export default function DoctorModal({ doctorId, firstDate, onClose, onBooked }) 
                   <p className="font-semibold text-slate-900">Booking summary</p>
                   <p className="mt-2 text-slate-600">
                     Dr. {doctor.fullName} · {formatDay(date)}
-                    {isToday ? " (today)" : ""} · Physical consultation
+                    {isToday ? " (today)" : ""} · {type === "video" ? "Video consultation" : "Physical consultation"}
                   </p>
                   <p className="mt-2 text-lg font-semibold text-slate-900">
                     {checkout.payment.amount > 0 ? formatMoney(checkout.payment.amount) : "Free"}
@@ -251,14 +268,18 @@ export default function DoctorModal({ doctorId, firstDate, onClose, onBooked }) 
                 </p>
                 <p className="font-serif text-6xl font-bold text-slate-900">{booking.tokenNumber}</p>
                 <p className="text-sm text-slate-500">
-                  Your token number
+                  {type === "video" ? "Your video token" : "Your token number"}
                   {booking.date === todayIST()
                     ? booking.peopleAhead > 0
                       ? ` · ${booking.peopleAhead} ${booking.peopleAhead === 1 ? "person is" : "people are"} ahead of you`
                       : " · you are next"
                     : ""}
                 </p>
-                <p className="text-xs text-slate-400">You can follow the queue live at the top of the search page.</p>
+                <p className="text-xs text-slate-400">
+                  {type === "video"
+                    ? "The doctor will set your time. You will see it under \"My video visits\" at the top of the search page, and mark yourself available when it is time."
+                    : "You can follow the queue live at the top of the search page."}
+                </p>
                 <button onClick={onClose} className="mt-2 rounded-full bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white hover:bg-slate-800">
                   Done
                 </button>

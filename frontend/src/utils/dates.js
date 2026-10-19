@@ -22,3 +22,18 @@ export function formatDay(date) {
     timeZone: "UTC",
   });
 }
+
+// "5:20 PM" for a moment (an ISO text or a Date), in Indian time
+export function formatTimeIST(moment) {
+  return new Date(moment).toLocaleTimeString("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
+  });
+}
+
+// "17:30" for a moment, in Indian time (the form the time inputs and the server use)
+export function clockOfIST(moment) {
+  return new Date(new Date(moment).getTime() + IST_OFFSET_MS).toISOString().slice(11, 16);
+}

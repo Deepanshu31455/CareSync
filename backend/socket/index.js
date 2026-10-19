@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 
 const { roomName } = require("./access");
 const { access } = require("./identity");
+const { registerCall } = require("./call");
 
 const MAX_ROOMS_PER_SOCKET = 8; // stops one browser from joining unlimited rooms
 
@@ -64,6 +65,9 @@ function initSocket(server, app, clientUrl) {
         return reply(ack, { ok: false, message: "Could not join the queue." });
       }
     });
+
+    // The video call's connection messages (doctor and patient of one video visit only)
+    registerCall(io, socket);
 
     socket.on("queue:leave", async (request) => {
       const { kind, doctorId: ref, date } = request || {};

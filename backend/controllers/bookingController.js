@@ -66,6 +66,9 @@ const hasActiveBooking = (patientId, doctorId, date) =>
 // The open payment for this patient, doctor and day (created, or refreshed when it already exists).
 // The unique index "one_open_payment" makes two parallel requests end up with the same payment.
 async function openPayment(patientId, doctor, date) {
+  // an unfinished payment for a video visit is replaced (the database allows one open payment per day)
+  await Payment.deleteOne({ patient: patientId, doctor: doctor._id, date, status: "created", type: "video" });
+
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       return await Payment.findOneAndUpdate(
@@ -161,7 +164,7 @@ exports.confirm = async (req, res) => {
     const patientId = req.patient._id;
     if (!mongoose.isValidObjectId(paymentId)) return fail(res, 404, "Payment not found.");
 
-    let payment = await Payment.findOne({ _id: paymentId, patient: patientId });
+    let payment = await Payment.findOne({ _id: paymentId, patient: patientId, type: { $ne: "video" } });
     if (!payment) return fail(res, 404, "Payment not found.");
 
     // A. Not paid yet: check the booking is still possible, then mark it paid (one atomic change)
@@ -313,3 +316,6 @@ exports.cancelBooking = async (req, res) => {
     return serverError(res, err, "Could not cancel the booking");
   }
 };
+
+// Shared with the video booking (videoBookingController)
+Object.assign(exports, { paymentMode, findDoctor, doctorCard, PAYMENT_MINUTES, CLAIM_SECONDS });

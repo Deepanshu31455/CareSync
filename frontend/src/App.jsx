@@ -9,6 +9,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import TrustAndLegal from "./pages/TrustAndLegalPage";
 import AssignmentResponse from "./pages/AssignmentResponse";
+import VideoCall from "./pages/VideoCall";
 
 // Logged-in pages
 import DoctorProfile from "./pages/DoctorProfile";
@@ -101,6 +102,14 @@ const router = createBrowserRouter([
       </Page>
     ),
   },
+  { 
+   path: "/video-call/:visitId",
+   element: 
+   <ProtectedRoute>
+       <VideoCall />
+   </ProtectedRoute> 
+   },
+
 
   // ─── Receptionist ──────────────────────────────────────────────────────────
   {

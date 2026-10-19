@@ -3,16 +3,17 @@ import { API_BASE } from "../config";
 
 // What the doctor sees about one person in the queue.
 //   doctorId       the doctor's 6-digit ID        appointmentId  the queue row that was opened
+//   mode           "physical" (default) or "video": a video visit is opened by its own address
 // Returns { info, loading, error }:
 //   info = { walkIn: true }                                     (no records for walk-ins)
 //   info = { walkIn: false, patient, consultations, prescriptions, reports }
-export default function usePatientInfo(doctorId, appointmentId) {
+export default function usePatientInfo(doctorId, appointmentId, mode = "physical") {
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!doctorId || !appointmentId) {
+    if ((mode !== "video" && !doctorId) || !appointmentId) {
       setInfo(null);
       return;
     }
@@ -24,8 +25,12 @@ export default function usePatientInfo(doctorId, appointmentId) {
 
     async function load() {
       try {
-        // GET /queue/:doctorId/appointments/:id/patient
-        const res = await fetch(`${API_BASE}/queue/${doctorId}/appointments/${appointmentId}/patient`, {
+        // GET /queue/:doctorId/appointments/:id/patient   or   GET /doctor/video/visits/:id/patient
+        const url =
+          mode === "video"
+            ? `${API_BASE}/doctor/video/visits/${appointmentId}/patient`
+            : `${API_BASE}/queue/${doctorId}/appointments/${appointmentId}/patient`;
+        const res = await fetch(url, {
           method: "GET",
           credentials: "include",
           signal: controller.signal,
@@ -43,7 +48,7 @@ export default function usePatientInfo(doctorId, appointmentId) {
     load();
 
     return () => controller.abort();
-  }, [doctorId, appointmentId]);
+  }, [doctorId, appointmentId, mode]);
 
   return { info, loading, error };
 }

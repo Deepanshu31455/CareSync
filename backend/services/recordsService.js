@@ -13,19 +13,22 @@ const Patient = require("../models/Patient");
 // entry: it is found by following `rescheduledFrom` back to the earlier visit.
 //
 // Returns the consultation's id, or null for people without an account (walk-ins keep no records).
-async function ensureConsultation(appointmentId) {
-  const appointment = await Appointment.findById(appointmentId)
+//   kind "video" does the same for a video visit (VideoVisit has no walk-ins and is never rescheduled)
+async function ensureConsultation(appointmentId, kind = "physical") {
+  const video = kind === "video";
+  const Visits = video ? require("../models/VideoVisit") : Appointment; // loaded only when needed
+  const appointment = await Visits.findById(appointmentId)
     .select("doctor patient date source tokenNumber rescheduledFrom consultationId")
     .lean();
 
-  if (!appointment || appointment.source !== "online" || !appointment.patient) return null;
+  if (!appointment || (appointment.source && appointment.source !== "online") || !appointment.patient) return null;
   if (appointment.consultationId) return appointment.consultationId;
 
   // An earlier visit in the same chain may already have the entry
   let inherited = null;
   let previous = appointment.rescheduledFrom;
   for (let hops = 0; previous && hops < 10 && !inherited; hops++) {
-    const earlier = await Appointment.findById(previous).select("consultationId rescheduledFrom").lean();
+    const earlier = await Visits.findById(previous).select("consultationId rescheduledFrom").lean();
     if (!earlier) break;
     inherited = earlier.consultationId || null;
     previous = earlier.rescheduledFrom;
@@ -34,13 +37,13 @@ async function ensureConsultation(appointmentId) {
   const consultationId = inherited || new mongoose.Types.ObjectId();
 
   // Claim: only one request can set the id on this appointment
-  const claimed = await Appointment.findOneAndUpdate(
+  const claimed = await Visits.findOneAndUpdate(
     { _id: appointmentId, consultationId: { $exists: false } },
     { consultationId },
     { new: true }
   );
   if (!claimed) {
-    const winner = await Appointment.findById(appointmentId).select("consultationId").lean();
+    const winner = await Visits.findById(appointmentId).select("consultationId").lean();
     return winner ? winner.consultationId || null : null;
   }
 
@@ -55,14 +58,14 @@ async function ensureConsultation(appointmentId) {
             _id: consultationId,
             doctor: appointment.doctor,
             consultationDate: new Date(`${appointment.date}T00:00:00+05:30`), // the visit's day, Indian time
-            reference: `Token ${appointment.tokenNumber}`,
+            reference: `${video ? "Video token" : "Token"} ${appointment.tokenNumber}`,
           },
         },
       }
     );
     if (result && result.matchedCount === 0) throw new Error("The patient account no longer exists.");
   } catch (err) {
-    await Appointment.updateOne({ _id: appointmentId }, { $unset: { consultationId: 1 } }); // let a later try go ahead
+    await Visits.updateOne({ _id: appointmentId }, { $unset: { consultationId: 1 } }); // let a later try go ahead
     throw err;
   }
 

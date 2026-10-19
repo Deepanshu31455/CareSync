@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import useDoctorSearch from "../hooks/useDoctorSearch";
 import useMyBookings from "../hooks/useMyBookings";
+import useVideoVisits from "../hooks/useVideoVisits";
 import { addDays, todayIST } from "../utils/dates";
 
 import { EmptyState, ErrorState } from "../components/shared/ui";
@@ -9,12 +10,14 @@ import SearchBar from "../components/search/SearchBar";
 import DoctorCard from "../components/search/DoctorCard";
 import DoctorModal from "../components/search/DoctorModal";
 import MyQueuePanel from "../components/search/MyQueuePanel";
+import MyVideoPanel from "../components/search/MyVideoPanel";
 
 const WINDOW_DAYS = 7; // the same limit as the server
 
 // The patient's page: follow today's queue, find a doctor, book.
 export default function SearchDoctors() {
   const mine = useMyBookings();
+  const video = useVideoVisits();
   const today = mine.today;
 
   const [text, setText] = useState("");
@@ -40,6 +43,15 @@ export default function SearchDoctors() {
         error={mine.error}
         today={today}
         onCancel={mine.cancel}
+      />
+
+      <MyVideoPanel
+        visits={video.visits}
+        connection={video.connection}
+        notice={video.notice}
+        error={video.error}
+        onAvailable={video.setAvailable}
+        onCancel={video.cancel}
       />
 
       <SearchBar
@@ -74,8 +86,9 @@ export default function SearchDoctors() {
           doctorId={opened.id}
           firstDate={date}
           onClose={() => setOpened(null)}
-          onBooked={() => {
-            mine.reload();
+          onBooked={(type) => {
+            if (type === "video") video.reload();
+            else mine.reload();
             retry(); // the doctor cards show the new queue numbers
           }}
         />

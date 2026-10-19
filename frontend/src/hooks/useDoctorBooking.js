@@ -4,8 +4,8 @@ import { API_BASE } from "../config";
 // One doctor's page and the three steps of booking.
 //   doctorId  the doctor's 6-digit ID
 // Returns the doctor, the bookable days and the actions:
-//   startPayment(date)  -> the payment to pay (or null on failure; see `error`)
-//   pay(paymentId)      -> the booking with its token number (or null on failure)
+//   startPayment(date, type)  -> the payment to pay (or null on failure; see `error`)   type: "physical" | "video"
+//   pay(paymentId, type)      -> the booking with its token number (or null on failure)
 export default function useDoctorBooking(doctorId) {
   const [doctor, setDoctor] = useState(null);
   const [days, setDays] = useState([]); // [{ date, weekday, open }] for today and the next 7 days
@@ -41,17 +41,18 @@ export default function useDoctorBooking(doctorId) {
   }, [doctorId]);
 
   // Step 1: ask the server to prepare the payment for this day
-  async function startPayment(date) {
+  async function startPayment(date, type = "physical") {
     try {
       setWorking(true);
       setError(null);
 
-      // POST /patient/bookings/checkout { doctorId, date } -> { mode, payment }
-      const res = await fetch(`${API_BASE}/patient/bookings/checkout`, {
+      // POST /patient/bookings/checkout (clinic) or /patient/video/checkout { doctorId, date } -> { mode, payment }
+      const path = type === "video" ? "/patient/video/checkout" : "/patient/bookings/checkout";
+      const res = await fetch(`${API_BASE}${path}`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ doctorId, date, type: "physical" }),
+        body: JSON.stringify({ doctorId, date, type }),
       });
       const result = await res.json();
 
@@ -66,13 +67,14 @@ export default function useDoctorBooking(doctorId) {
   }
 
   // Step 2: pay. (In demo mode this only marks the payment as paid; no money moves.)
-  async function pay(paymentId) {
+  async function pay(paymentId, type = "physical") {
     try {
       setWorking(true);
       setError(null);
 
-      // POST /patient/bookings/:paymentId/confirm -> { booking }
-      const res = await fetch(`${API_BASE}/patient/bookings/${paymentId}/confirm`, {
+      // POST /patient/bookings/:paymentId/confirm (clinic) or /patient/video/:paymentId/confirm -> { booking }
+      const base = type === "video" ? "/patient/video" : "/patient/bookings";
+      const res = await fetch(`${API_BASE}${base}/${paymentId}/confirm`, {
         method: "POST",
         credentials: "include",
       });
