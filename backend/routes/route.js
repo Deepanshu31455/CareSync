@@ -10,7 +10,7 @@ const { logout }                                    = require("../controllers/lo
 const { getMe }                                     = require("../controllers/auththroughcookie");
 const { verifyGoogleForRegistration, loginWithGoogle } = require("../controllers/googleauth");
 const { imageUpload }                               = require("../controllers/imageupload");
-const { getDoctorProfile, updateDoctorProfile }     = require("../controllers/doctorController");
+const { getDoctorProfile, updateDoctorProfile, updatePhoto: updateDoctorPhoto } = require("../controllers/doctorController");
 const {
   getProfile,
   updateProfile,
@@ -74,11 +74,12 @@ router.post("/login",           login);
 router.post("/logout",          logout);
 router.post("/googleregister",  verifyGoogleForRegistration);
 router.post("/googlelogin",     loginWithGoogle);
-router.put( "/imageUpload",     imageUpload);
+router.put( "/imageUpload",     authMiddleware, imageUpload);
 
 // ─── Doctor profile ──────────────────────────────────────────────────────────
 router.get("/doctor/profile",  authMiddleware, getDoctorProfile);
 router.put("/doctor/profile",  authMiddleware, updateDoctorProfile);
+router.put("/doctor/photo",    authMiddleware, updateDoctorPhoto);
 
 // ─── Patient profile ─────────────────────────────────────────────────────────
 // authMiddleware = logged in?   loadPatient = is a patient, and which one?

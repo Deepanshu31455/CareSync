@@ -135,10 +135,10 @@ export default function useDoctorProfile() {
 
   /* ---------- 5. Uploading the profile photo ---------- */
 
-  // Called when the doctor picks an image (only possible in Edit mode).
+  // Called when the doctor picks an image.
   async function uploadPhoto(event) {
     const file = event.target.files?.[0];
-    if (!file || !editing) return;
+    if (!file) return;
 
     // Only images are allowed
     if (!file.type.startsWith("image/")) {
@@ -153,11 +153,9 @@ export default function useDoctorProfile() {
       // Send the file as form data
       const formData = new FormData();
       formData.append("imageFile", file);
-      formData.append("id", doctor?.id || currentUser?.id || doctor?._id);
-      formData.append("role", "doctor");
 
       // PUT the image to the backend
-      const res = await fetch(`${BASE}/imageUpload`, {
+      const res = await fetch(`${BASE}/doctor/photo`, {
         method: "PUT",
         credentials: "include",
         body: formData,
