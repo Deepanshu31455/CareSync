@@ -6,7 +6,7 @@ import usePatientProfile from "../hooks/usePatientProfile";
 import { TABS } from "../components/patientProfile/constants";
 import { ErrorState } from "../components/patientProfile/ui";
 
-import ProfileHeader from "../components/patientProfile/ProfileHeader";
+import ProfileHeader from "../components/shared/ProfileHeader";
 import PersonalInfoTab from "../components/patientProfile/PersonalInfoTab";
 import ConsultationsTab from "../components/patientProfile/ConsultationsTab";
 import DocumentsTab from "../components/patientProfile/DocumentsTab";

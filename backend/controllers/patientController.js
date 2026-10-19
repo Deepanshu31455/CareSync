@@ -22,7 +22,7 @@ const EDITABLE_FIELDS = [
 
 const WITHOUT_RECORDS = "-consultations -prescriptions -reports -bills"; // keeps profile responses small
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const IMAGE_TYPES = ["image/jpeg", "image/png"];
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
 
 // The three things a patient can upload. The key is also the name of the list on the Patient.
 //   fields   = text fields read from the form (and sent back to the page)

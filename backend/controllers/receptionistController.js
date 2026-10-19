@@ -12,7 +12,7 @@ const Receptionist = require("../models/Receptionist");
 const EDITABLE_FIELDS = ["fullName", "phone", "dob", "gender", "address"];
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5 MB
-const PHOTO_TYPES = ["image/jpeg", "image/png"];
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
 
 function sendError(res, err, fallback) {
   console.log(err);
@@ -69,7 +69,7 @@ exports.updatePhoto = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please choose an image." });
     }
     if (!PHOTO_TYPES.includes(file.mimetype)) {
-      return res.status(400).json({ success: false, message: "Only JPG or PNG images are allowed." });
+      return res.status(400).json({ success: false, message: "Only JPG, PNG, or WebP images are allowed." });
     }
     if (file.size > MAX_PHOTO_SIZE) {
       return res.status(400).json({ success: false, message: "The image must be smaller than 5 MB." });

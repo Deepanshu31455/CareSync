@@ -2,8 +2,12 @@ import { useEffect } from "react";
 import { Download, X } from "lucide-react";
 
 // Full-screen image view. Esc or a click outside closes it.
-// image = { src, title, downloadUrl }  (downloadUrl is optional)
-export default function PhotoLightbox({ image, onClose }) {
+// Supports both { image: { src, title, downloadUrl } } and { src, alt }
+export default function PhotoLightbox({ image, src, alt, onClose }) {
+  const imgSrc = image?.src || src;
+  const imgTitle = image?.title || image?.alt || alt || "Photo";
+  const downloadUrl = image?.downloadUrl;
+
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -16,6 +20,8 @@ export default function PhotoLightbox({ image, onClose }) {
       document.body.style.overflow = previousOverflow;
     };
   }, [onClose]);
+
+  if (!imgSrc) return null;
 
   return (
     <div
@@ -34,15 +40,15 @@ export default function PhotoLightbox({ image, onClose }) {
       </button>
 
       <img
-        src={image.src}
-        alt={image.title}
+        src={imgSrc}
+        alt={imgTitle}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[80vh] max-w-[92vw] rounded-xl object-contain"
+        className="max-h-[85vh] max-w-[92vw] rounded-2xl object-contain shadow-2xl"
       />
 
-      {image.downloadUrl && (
+      {downloadUrl && (
         <a
-          href={image.downloadUrl}
+          href={downloadUrl}
           download
           onClick={(e) => e.stopPropagation()}
           className="flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100"

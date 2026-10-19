@@ -3,7 +3,7 @@ import { Download, Trash2 } from "lucide-react";
 import { KINDS } from "./constants";
 import { canDelete, formatDate, newestFirst } from "./helpers";
 import { Card, EmptyState, TabTitle, Thumb } from "./ui";
-import PhotoLightbox from "./PhotoLightbox";
+import PhotoLightbox from "../shared/PhotoLightbox";
 import UploadForm from "./UploadForm";
 
 // What each kind shows on its card: a title and some detail lines

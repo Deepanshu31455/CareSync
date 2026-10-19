@@ -135,9 +135,9 @@ export default function useDoctorProfile() {
 
   /* ---------- 5. Uploading the profile photo ---------- */
 
-  // Called when the doctor picks an image.
-  async function uploadPhoto(event) {
-    const file = event.target.files?.[0];
+  // Called when the doctor picks an image (accepts File object or change event).
+  async function uploadPhoto(fileOrEvent) {
+    const file = fileOrEvent?.target?.files ? fileOrEvent.target.files[0] : fileOrEvent;
     if (!file) return;
 
     // Only images are allowed
@@ -181,7 +181,7 @@ export default function useDoctorProfile() {
       dispatch(setError(err.message || "Photo upload failed."));
     } finally {
       setUploading(false);
-      event.target.value = ""; // lets the same file be picked again later
+      if (fileOrEvent?.target) fileOrEvent.target.value = "";
     }
   }
 

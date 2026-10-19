@@ -56,9 +56,9 @@ export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 // Rules for uploaded files
 export const MAX_FILE_MB = 5;
-const IMAGES = ["image/jpeg", "image/png"];
+const IMAGES = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
 
-export const PHOTO_RULES = { accept: IMAGES, acceptText: "JPG or PNG" };
+export const PHOTO_RULES = { accept: IMAGES, acceptText: "JPG, PNG or WebP" };
 
 // What each uploadable item type needs. The upload form is built from `fields`.
 export const KINDS = {

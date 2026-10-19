@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronDown, Download } from "lucide-react";
 import { doctorLabel, formatDate, formatMoney } from "./helpers";
 import { Card, EmptyState, StatusBadge, TabTitle, Thumb } from "./ui";
-import PhotoLightbox from "./PhotoLightbox";
+import PhotoLightbox from "../shared/PhotoLightbox";
 
 // Small heading used inside an opened consultation
 function Block({ title, children }) {
